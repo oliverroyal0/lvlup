@@ -4,6 +4,7 @@ import { awardXP, xpForNextLevel, incrementStat} from "./xpEngine"
 import MissionsPage from "./pages/MissionsPage"
 import StatsPage from "./pages/StatsPage"
 import JournalPage from "./pages/JournalPage"
+import ProfilePage from "./pages/ProfilePage"
 
 const tabs = [
   { id: "quests", icon: "⚔️", label: "Quests" },
@@ -75,12 +76,12 @@ export default function App() {
       {/* Page content */}
       <div className="flex-1 overflow-y-auto pb-24 px-5 pt-5">
         {activeTab === "quests" && user && (
-          <QuestsPage user={user} onQuestComplete={handleQuestComplete} onUserUpdate={loadUser} />
+          <QuestsPage user={user} onQuestComplete={handleQuestComplete} />
         )}
         {activeTab === "stats" && user && ( <StatsPage user={user} /> )}
         {activeTab === "missions" && ( <MissionsPage onUserUpdate={loadUser} /> )}
         {activeTab === "journal" && <JournalPage />}
-        {activeTab === "profile" && <PlaceholderPage title="Profile" icon="👤" color="text-gold" />}
+        {activeTab === "profile" && user && ( <ProfilePage user={user} onUserUpdate={loadUser} /> )}
       </div>
 
       {/* Bottom nav */}
@@ -106,10 +107,9 @@ export default function App() {
   )
 }
 
-function QuestsPage({ user, onQuestComplete, onUserUpdate }: {
+function QuestsPage({ user, onQuestComplete, }: {
   user: User
   onQuestComplete: (q: Quest) => void
-  onUserUpdate: () => void
 }) {
   const [quests, setQuests] = useState<Quest[]>([])
   const [showAdd, setShowAdd] = useState(false)
@@ -384,12 +384,4 @@ function AddQuestSheet({ onClose, onSave }: { onClose: () => void; onSave: () =>
   )
 }
 
-function PlaceholderPage({ title, icon, color }: { title: string; icon: string; color: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-30">
-      <span className="text-5xl">{icon}</span>
-      <span className={`font-rajdhani font-bold text-2xl tracking-widest uppercase ${color}`}>{title}</span>
-      <span className="font-mono text-xs text-muted">Coming soon</span>
-    </div>
-  )
-}
+
