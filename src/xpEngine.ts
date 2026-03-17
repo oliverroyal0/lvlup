@@ -30,6 +30,7 @@ export async function awardXP(amount: number): Promise<{
   newLevel: number
   newRank: string
 }> {
+    
   const user = await db.users.toCollection().first()
   if (!user || !user.id) return { leveledUp: false, newLevel: 1, newRank: "F" }
 
