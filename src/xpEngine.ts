@@ -58,3 +58,23 @@ export async function awardXP(amount: number): Promise<{
 
   return { leveledUp, newLevel, newRank }
 }
+
+export async function incrementStat(category: string, amount: number = 1) {
+  const existing = await db.statRecords
+    .where("category")
+    .equals(category)
+    .first()
+
+  if (existing && existing.id) {
+    await db.statRecords.update(existing.id, {
+      score: existing.score + amount,
+      updatedAt: new Date(),
+    })
+  } else {
+    await db.statRecords.add({
+      category,
+      score: amount,
+      updatedAt: new Date(),
+    })
+  }
+}

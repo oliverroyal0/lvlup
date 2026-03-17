@@ -36,6 +36,8 @@ export default function App() {
 
     // Award XP
     const result = await awardXP(quest.xpReward)
+
+    await incrementStat(quest.category)
     await loadUser()
 
     if (result.leveledUp) {

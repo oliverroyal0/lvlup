@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { db, type Mission } from "../db"
-import { awardXP } from "../xpEngine"
+import { awardXP, incrementStat } from "../xpEngine"
 
 const MISSION_COLORS = {
   main: { border: "border-gold/40", bg: "bg-gold/5", label: "text-gold", badge: "bg-gold/15 text-gold border-gold/30" },
@@ -49,6 +49,7 @@ export default function MissionsPage({ onUserUpdate }: { onUserUpdate: () => voi
 
   if (isNowComplete) {
     await awardXP(mission.xpReward)
+    await incrementStat(mission.category)
     onUserUpdate()
   }
 
