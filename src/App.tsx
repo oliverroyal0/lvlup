@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
 import { db, initUser, type Quest, type User } from "./db"
 import { awardXP, xpForNextLevel } from "./xpEngine"
+import MissionsPage from "./pages/MissionsPage"
 
 const tabs = [
   { id: "quests", icon: "⚔️", label: "Quests" },
   { id: "stats", icon: "📊", label: "Stats" },
-  { id: "guild", icon: "👥", label: "Guild" },
+  { id: "missions", icon: "🎯", label: "Missions" },
   { id: "journal", icon: "📖", label: "Journal" },
   { id: "profile", icon: "👤", label: "Profile" },
 ]
@@ -73,7 +74,7 @@ export default function App() {
           <QuestsPage user={user} onQuestComplete={handleQuestComplete} onUserUpdate={loadUser} />
         )}
         {activeTab === "stats" && <PlaceholderPage title="Stats" icon="📊" color="text-green" />}
-        {activeTab === "guild" && <PlaceholderPage title="Guild" icon="👥" color="text-purple" />}
+        {activeTab === "missions" && ( <MissionsPage onUserUpdate={loadUser} /> )}
         {activeTab === "journal" && <PlaceholderPage title="Journal" icon="📖" color="text-orange" />}
         {activeTab === "profile" && <PlaceholderPage title="Profile" icon="👤" color="text-gold" />}
       </div>

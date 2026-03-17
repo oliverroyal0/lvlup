@@ -11,6 +11,21 @@ export interface Quest {
   completedAt?: Date
 }
 
+export interface Mission {
+  id?: number
+  title: string
+  missionType: "main" | "seasonal" | "yearly" | "sideQuest"
+  category: string
+  currentValue: number
+  targetValue: number
+  xpReward: number
+  titleReward?: string
+  isCompleted: boolean
+  deadline?: Date
+  createdAt: Date
+  completedAt?: Date
+}
+
 export interface User {
   id?: number
   username: string
@@ -24,12 +39,14 @@ export interface User {
 export class LVLUpDatabase extends Dexie {
   quests!: Table<Quest>
   users!: Table<User>
+  missions!: Table<Mission>
 
   constructor() {
     super("lvlup-db")
-    this.version(1).stores({
-      quests: "++id, category, frequency, isCompleted, createdAt",
-      users: "++id, username",
+    this.version(2).stores({
+        quests: "++id, category, frequency, isCompleted, createdAt",
+        users: "++id, username",
+        missions: "++id, missionType, category, isCompleted, createdAt",
     })
   }
 }
