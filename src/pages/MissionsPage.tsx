@@ -37,23 +37,23 @@ export default function MissionsPage({ onUserUpdate }: { onUserUpdate: () => voi
 
   async function incrementProgress(mission: Mission) {
     if (!mission.id || mission.isCompleted) return
-    const newValue = Math.min(mission.currentValue + 1, mission.targetValue)
+
+    const newValue = mission.currentValue + 1
     const isNowComplete = newValue >= mission.targetValue
 
     await db.missions.update(mission.id, {
-      currentValue: newValue,
-      isCompleted: isNowComplete,
-      completedAt: isNowComplete ? new Date() : undefined,
-    })
+    currentValue: newValue,
+    isCompleted: isNowComplete,
+    completedAt: isNowComplete ? new Date() : undefined,
+  })
 
-    if (isNowComplete) {
-      await awardXP(mission.xpReward)
-      onUserUpdate()
-    }
-
-    loadMissions()
+  if (isNowComplete) {
+    await awardXP(mission.xpReward)
+    onUserUpdate()
   }
 
+  loadMissions()
+}
   async function deleteMission(id: number) {
     await db.missions.delete(id)
     loadMissions()
