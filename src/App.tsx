@@ -3,6 +3,7 @@ import { db, initUser, type Quest, type User } from "./db"
 import { awardXP, xpForNextLevel, incrementStat} from "./xpEngine"
 import MissionsPage from "./pages/MissionsPage"
 import StatsPage from "./pages/StatsPage"
+import JournalPage from "./pages/JournalPage"
 
 const tabs = [
   { id: "quests", icon: "⚔️", label: "Quests" },
@@ -78,7 +79,7 @@ export default function App() {
         )}
         {activeTab === "stats" && user && ( <StatsPage user={user} /> )}
         {activeTab === "missions" && ( <MissionsPage onUserUpdate={loadUser} /> )}
-        {activeTab === "journal" && <PlaceholderPage title="Journal" icon="📖" color="text-orange" />}
+        {activeTab === "journal" && <JournalPage />}
         {activeTab === "profile" && <PlaceholderPage title="Profile" icon="👤" color="text-gold" />}
       </div>
 

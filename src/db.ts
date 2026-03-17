@@ -33,6 +33,15 @@ export interface StatRecord {
   updatedAt: Date
 }
 
+export interface JournalEntry {
+  id?: number
+  content: string
+  mood: "struggling" | "neutral" | "good" | "great" | "locked in"
+  tags: string[]
+  linkedQuestIds: number[]
+  createdAt: Date
+}
+
 export interface User {
   id?: number
   username: string
@@ -48,15 +57,17 @@ export class LVLUpDatabase extends Dexie {
   users!: Table<User>
   missions!: Table<Mission>
   statRecords!: Table<StatRecord>
+  journalEntries!: Table<JournalEntry>
 
   constructor() {
     super("lvlup-db")
-    this.version(3).stores({
-  quests: "++id, category, frequency, isCompleted, createdAt",
-  users: "++id, username",
-  missions: "++id, missionType, category, isCompleted, createdAt",
-  statRecords: "++id, category, updatedAt",
-})
+    this.version(4).stores({
+        quests: "++id, category, frequency, isCompleted, createdAt",
+        users: "++id, username",
+        missions: "++id, missionType, category, isCompleted, createdAt",
+        statRecords: "++id, category, updatedAt",
+        journalEntries: "++id, mood, createdAt",
+    })
   }
 }
 
