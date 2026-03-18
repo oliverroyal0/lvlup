@@ -23,7 +23,11 @@ const MISSION_ICONS = {
   sideQuest: "🗺️",
 }
 
-export default function MissionsPage({ onUserUpdate }: { onUserUpdate: () => void }) {
+export default function MissionsPage({ onUserUpdate, onLevelUp }: {
+  onUserUpdate: () => void
+  onLevelUp: (msg: string, isRankUp: boolean) => void
+}) {
+
   const [missions, setMissions] = useState<Mission[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [activeFilter, setActiveFilter] = useState<"all" | Mission["missionType"]>("all")
@@ -48,10 +52,24 @@ export default function MissionsPage({ onUserUpdate }: { onUserUpdate: () => voi
   })
 
   if (isNowComplete) {
-    await awardXP(mission.xpReward)
-    await incrementStat(mission.category)
-    onUserUpdate()
+  const previousUser = await db.users.toCollection().first()
+  const previousRank = previousUser?.rank
+  const result = await awardXP(mission.xpReward)
+  await incrementStat(mission.category)
+  const updatedUser = await db.users.toCollection().first()
+  const newRank = updatedUser?.rank
+  onUserUpdate()
+
+  if (result.leveledUp) {
+    const rankChanged = newRank && previousRank && newRank !== previousRank
+    onLevelUp(
+      rankChanged
+        ? `${previousRank} → ${newRank}`
+        : `Level ${result.newLevel} · Rank ${result.newRank}`,
+      !!rankChanged
+    )
   }
+}
 
   loadMissions()
 }

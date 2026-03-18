@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { db, type JournalEntry, type Quest } from "../db"
+import { awardXP } from "../xpEngine"
 
 const MOOD_CONFIG = {
   struggling: { emoji: "😔", label: "Struggling", color: "text-red", border: "border-red/40", bg: "bg-red/10" },
@@ -11,7 +12,9 @@ const MOOD_CONFIG = {
 
 type Mood = keyof typeof MOOD_CONFIG
 
-export default function JournalPage() {
+export default function JournalPage({ onLevelUp }: {
+  onLevelUp: (msg: string, isRankUp: boolean) => void
+}) {
   const [entries, setEntries] = useState<JournalEntry[]>([])
   const [showEditor, setShowEditor] = useState(false)
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null)
@@ -141,6 +144,7 @@ export default function JournalPage() {
           existing={selectedEntry}
           onClose={() => setShowEditor(false)}
           onSave={() => { setShowEditor(false); loadEntries() }}
+          onLevelUp={onLevelUp}
         />
       )}
     </div>
@@ -206,10 +210,11 @@ function EntryCard({ entry, onOpen, onDelete }: {
   )
 }
 
-function JournalEditor({ existing, onClose, onSave }: {
+function JournalEditor({ existing, onClose, onSave, onLevelUp}: {
   existing: JournalEntry | null
   onClose: () => void
   onSave: () => void
+  onLevelUp: (msg: string, isRankUp: boolean) => void
 }) {
   const [content, setContent] = useState(existing?.content ?? "")
   const [mood, setMood] = useState<Mood>(existing?.mood ?? "good")
@@ -247,20 +252,38 @@ function JournalEditor({ existing, onClose, onSave }: {
   }
 
   async function save() {
-    if (!content.trim()) return
+  if (!content.trim()) return
 
-    if (existing?.id) {
-      await db.journalEntries.update(existing.id, {
-        content, mood, tags, linkedQuestIds,
-      })
-    } else {
-      await db.journalEntries.add({
-        content, mood, tags, linkedQuestIds,
-        createdAt: new Date(),
-      })
+  if (existing?.id) {
+    await db.journalEntries.update(existing.id, {
+      content, mood, tags, linkedQuestIds,
+    })
+  } else {
+    await db.journalEntries.add({
+      content, mood, tags, linkedQuestIds,
+      createdAt: new Date(),
+    })
+
+    // Award XP for new entry
+    const previousUser = await db.users.toCollection().first()
+    const previousRank = previousUser?.rank
+    const result = await awardXP(35)
+    const updatedUser = await db.users.toCollection().first()
+    const newRank = updatedUser?.rank
+
+    if (result.leveledUp) {
+      const rankChanged = newRank && previousRank && newRank !== previousRank
+      onLevelUp(
+        rankChanged
+          ? `${previousRank} → ${newRank}`
+          : `Level ${result.newLevel} · Rank ${result.newRank}`,
+        !!rankChanged
+      )
     }
-    onSave()
   }
+
+  onSave()
+}
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col justify-end max-w-sm mx-auto left-1/2 -translate-x-1/2">
