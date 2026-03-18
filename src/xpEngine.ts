@@ -1,4 +1,6 @@
 import { db } from "./db"
+import { syncUserToCloud } from "./sync"
+import { syncStatToCloud } from "./sync"
 
 const XP_PER_LEVEL = 500
 
@@ -11,8 +13,8 @@ export function rankFromLevel(level: number): string {
   if (level >= 30) return "A"
   if (level >= 20) return "B"
   if (level >= 10) return "C"
-  if (level >= 5)  return "D"
-  if (level >= 2)  return "E"
+  if (level >= 5) return "D"
+  if (level >= 2) return "E"
   return "F"
 }
 
@@ -21,7 +23,7 @@ export function titleFromLevel(level: number): string {
   if (level >= 30) return "Shadow Grinder"
   if (level >= 20) return "Awakened"
   if (level >= 10) return "Rising"
-  if (level >= 5)  return "Initiate"
+  if (level >= 5) return "Initiate"
   return "Newcomer"
 }
 
@@ -30,7 +32,7 @@ export async function awardXP(amount: number): Promise<{
   newLevel: number
   newRank: string
 }> {
-    
+
   const user = await db.users.toCollection().first()
   if (!user || !user.id) return { leveledUp: false, newLevel: 1, newRank: "F" }
 
@@ -57,6 +59,9 @@ export async function awardXP(amount: number): Promise<{
     title: newTitle,
   })
 
+  const updatedUser = await db.users.toCollection().first()
+  if (updatedUser) await syncUserToCloud(updatedUser)
+
   return { leveledUp, newLevel, newRank }
 }
 
@@ -78,4 +83,6 @@ export async function incrementStat(category: string, amount: number = 1) {
       updatedAt: new Date(),
     })
   }
+  const record = await db.statRecords.where("category").equals(category).first()
+  if (record) await syncStatToCloud(category, record.score)
 }

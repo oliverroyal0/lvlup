@@ -15,6 +15,7 @@ import { Onboarding } from "./components/Onboarding"
 import { Auth } from "./components/Auth"
 import { supabase } from "./supabase"
 import { type Session } from "@supabase/supabase-js"
+import { pullFromCloud, syncQuestToCloud } from "./sync"
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("quests")
@@ -29,15 +30,22 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setAuthLoading(false)
+      if (session) {
+        pullFromCloud().then(() => initUser().then(loadUser))
+      }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (session) {
+        pullFromCloud().then(() => initUser().then(loadUser))
+      }
     })
+
     return () => subscription.unsubscribe()
   }, [])
 
-   useEffect(() => {
+  useEffect(() => {
     initUser().then(loadUser)
   }, [])
 
@@ -53,6 +61,8 @@ export default function App() {
       isCompleted: true,
       completedAt: new Date(),
     })
+    const updatedQuest = await db.quests.get(quest.id!)
+    if (updatedQuest) await syncQuestToCloud(updatedQuest)
 
     const previousUser = await db.users.toCollection().first()
     const previousRank = previousUser?.rank
@@ -75,7 +85,7 @@ export default function App() {
     }
   }
 
-   if (authLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="font-rajdhani font-bold text-2xl text-gold tracking-widest animate-pulse">
@@ -187,232 +197,232 @@ function QuestsPage({ user, onQuestComplete, }: {
 
   const xpNeeded = xpForNextLevel(user.level)
 
-    return (
-      <div className="space-y-5">
+  return (
+    <div className="space-y-5">
 
-        {/* Player card */}
-        <div className="bg-surface border border-border rounded-xl p-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-14 h-14 rounded-xl bg-surface2 border-2 border-gold flex items-center justify-center font-rajdhani font-bold text-2xl text-gold">
-                {user.username.charAt(0).toUpperCase()}
-              </div>
-              <div className="absolute -bottom-1.5 -right-1.5 bg-red text-white font-mono text-[9px] px-1.5 py-0.5 rounded-sm tracking-wide">
-                {user.rank}
-              </div>
+      {/* Player card */}
+      <div className="bg-surface border border-border rounded-xl p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="w-14 h-14 rounded-xl bg-surface2 border-2 border-gold flex items-center justify-center font-rajdhani font-bold text-2xl text-gold">
+              {user.username.charAt(0).toUpperCase()}
             </div>
-            <div>
-              <div className="font-rajdhani font-bold text-xl tracking-wide leading-none uppercase">{user.username}</div>
-              <div className="font-mono text-[10px] text-purple tracking-widest mt-1 uppercase">{user.title}</div>
-              <div className="font-mono text-[11px] text-muted mt-1">
-                Level <span className="text-gold font-bold">{user.level}</span> · {user.currentXP.toLocaleString()} / {xpNeeded.toLocaleString()} XP
-              </div>
+            <div className="absolute -bottom-1.5 -right-1.5 bg-red text-white font-mono text-[9px] px-1.5 py-0.5 rounded-sm tracking-wide">
+              {user.rank}
             </div>
           </div>
+          <div>
+            <div className="font-rajdhani font-bold text-xl tracking-wide leading-none uppercase">{user.username}</div>
+            <div className="font-mono text-[10px] text-purple tracking-widest mt-1 uppercase">{user.title}</div>
+            <div className="font-mono text-[11px] text-muted mt-1">
+              Level <span className="text-gold font-bold">{user.level}</span> · {user.currentXP.toLocaleString()} / {xpNeeded.toLocaleString()} XP
+            </div>
+          </div>
+        </div>
 
-          {/* XP bar */}
-          <XPBar currentXP={user.currentXP} xpNeeded={xpNeeded} level={user.level} />
+        {/* XP bar */}
+        <XPBar currentXP={user.currentXP} xpNeeded={xpNeeded} level={user.level} />
 
-          {/* Stat chips */}
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {[
-              { icon: "💪", name: "Strength", val: 0, color: "text-cyan" },
-              { icon: "🧠", name: "Mind", val: 0, color: "text-purple" },
-              { icon: "💰", name: "Wealth", val: 0, color: "text-gold" },
-              { icon: "🌍", name: "Explorer", val: 0, color: "text-green" },
-              { icon: "🎯", name: "Focus", val: 0, color: "text-red" },
-            ].map((stat) => (
-              <div key={stat.name} className="flex-shrink-0 bg-surface2 border border-border rounded-lg px-2.5 py-2 flex items-center gap-2">
-                <span className="text-sm">{stat.icon}</span>
-                <div>
-                  <div className="font-mono text-[9px] text-muted uppercase tracking-wide">{stat.name}</div>
-                  <div className={`font-rajdhani font-bold text-base leading-none ${stat.color}`}>{stat.val}</div>
-                </div>
+        {/* Stat chips */}
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {[
+            { icon: "💪", name: "Strength", val: 0, color: "text-cyan" },
+            { icon: "🧠", name: "Mind", val: 0, color: "text-purple" },
+            { icon: "💰", name: "Wealth", val: 0, color: "text-gold" },
+            { icon: "🌍", name: "Explorer", val: 0, color: "text-green" },
+            { icon: "🎯", name: "Focus", val: 0, color: "text-red" },
+          ].map((stat) => (
+            <div key={stat.name} className="flex-shrink-0 bg-surface2 border border-border rounded-lg px-2.5 py-2 flex items-center gap-2">
+              <span className="text-sm">{stat.icon}</span>
+              <div>
+                <div className="font-mono text-[9px] text-muted uppercase tracking-wide">{stat.name}</div>
+                <div className={`font-rajdhani font-bold text-base leading-none ${stat.color}`}>{stat.val}</div>
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Daily quests */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-px bg-gold"></div>
+            <span className="font-mono text-[10px] text-muted tracking-widest uppercase">Daily Quests</span>
+          </div>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="font-mono text-[10px] text-purple hover:text-gold transition-colors"
+          >
+            + ADD
+          </button>
+        </div>
+
+        {quests.length === 0 ? (
+          <div className="text-center py-10 opacity-30">
+            <div className="text-4xl mb-2">⚔️</div>
+            <div className="font-mono text-xs text-muted">No quests yet. Add one above.</div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <AnimatePresence>
+              {quests.map((quest) => (
+                <AnimatedQuestRow
+                  key={quest.id}
+                  quest={quest}
+                  onComplete={() => { onQuestComplete(quest); loadQuests() }}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
+      {/* Streak */}
+      <div className="bg-surface border border-border rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="font-rajdhani font-bold text-3xl text-red leading-none">7</div>
+            <div className="font-mono text-[9px] text-muted tracking-widest mt-1">DAY STREAK 🔥</div>
+          </div>
+          <div className="flex gap-1.5">
+            {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+              <div key={d} className="w-5 h-5 rounded-md bg-red opacity-80" />
+            ))}
+          </div>
+        </div>
+        <div className="font-mono text-[10px] text-muted">Longest streak: 7 days · Don't break the chain.</div>
+      </div>
+
+      {/* Add Quest Sheet */}
+      {showAdd && (
+        <AddQuestSheet
+          onClose={() => setShowAdd(false)}
+          onSave={() => { setShowAdd(false); loadQuests() }}
+        />
+      )}
+    </div>
+  )
+}
+
+function AddQuestSheet({ onClose, onSave }: { onClose: () => void; onSave: () => void }) {
+  const [title, setTitle] = useState("")
+  const [category, setCategory] = useState("STRENGTH")
+  const [frequency, setFrequency] = useState<"daily" | "weekly" | "bi-weekly" | "monthly" | "semi-annually" | "bi-annually" | "annually" | "oneTime">("daily")
+  const [xp, setXp] = useState(25)
+
+  const categories = ["STRENGTH", "MIND", "WEALTH", "EXPLORER", "FOCUS", "HEALTH"]
+
+  const freqXP = {
+    daily: 25,
+    weekly: 100,
+    "bi-weekly": 75,
+    monthly: 150,
+    "semi-annually": 300,
+    "bi-annually": 200,
+    annually: 500,
+    oneTime: 50,
+  }
+
+  const freqLabels = {
+    daily: "Daily",
+    weekly: "Weekly",
+    "bi-weekly": "Bi-Weekly",
+    monthly: "Monthly",
+    "semi-annually": "Semi-Annual",
+    "bi-annually": "Bi-Annual",
+    annually: "Annually",
+    oneTime: "One-Time",
+  }
+
+  async function save() {
+    if (!title.trim()) return
+    await db.quests.add({
+      title: title.trim(),
+      category,
+      frequency,
+      xpReward: xp,
+      isCompleted: false,
+      createdAt: new Date(),
+    })
+    onSave()
+  }
+
+  return (
+    <div className="fixed inset-0 z-40 flex flex-col justify-end max-w-sm mx-auto left-1/2 -translate-x-1/2">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+
+      {/* Sheet */}
+      <div className="relative bg-surface border-t border-border rounded-t-2xl p-5 space-y-5 z-50">
+        <div className="flex items-center justify-between">
+          <span className="font-rajdhani font-bold text-lg text-gold tracking-wide">NEW QUEST</span>
+          <button onClick={onClose} className="text-muted text-xl leading-none">✕</button>
+        </div>
+
+        {/* Title */}
+        <div>
+          <label className="font-mono text-[9px] text-muted tracking-widest uppercase block mb-2">Quest Title</label>
+          <input
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="What's the mission?"
+            className="w-full bg-surface2 border border-border rounded-lg px-3 py-2.5 text-white text-sm font-sans outline-none focus:border-gold transition-colors placeholder:text-muted"
+          />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="font-mono text-[9px] text-muted tracking-widest uppercase block mb-2">Category</label>
+          <div className="grid grid-cols-3 gap-2">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${category === cat
+                  ? "border-gold bg-gold/10 text-gold"
+                  : "border-border text-muted hover:border-muted"
+                  }`}
+              >
+                {cat}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Daily quests */}
+        {/* Frequency */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-px bg-gold"></div>
-              <span className="font-mono text-[10px] text-muted tracking-widest uppercase">Daily Quests</span>
-            </div>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="font-mono text-[10px] text-purple hover:text-gold transition-colors"
-            >
-              + ADD
-            </button>
+          <label className="font-mono text-[9px] text-muted tracking-widest uppercase block mb-2">Frequency</label>
+          <div className="grid grid-cols-2 gap-2">
+            {(Object.keys(freqLabels) as Array<keyof typeof freqLabels>).map(freq => (
+              <button
+                key={freq}
+                onClick={() => { setFrequency(freq); setXp(freqXP[freq]) }}
+                className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${frequency === freq
+                  ? "border-purple bg-purple/10 text-purple"
+                  : "border-border text-muted hover:border-muted"
+                  }`}
+              >
+                {freqLabels[freq]}
+              </button>
+            ))}
           </div>
-
-          {quests.length === 0 ? (
-            <div className="text-center py-10 opacity-30">
-              <div className="text-4xl mb-2">⚔️</div>
-              <div className="font-mono text-xs text-muted">No quests yet. Add one above.</div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <AnimatePresence>
-                {quests.map((quest) => (
-                  <AnimatedQuestRow
-                    key={quest.id}
-                    quest={quest}
-                    onComplete={() => { onQuestComplete(quest); loadQuests() }}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
         </div>
 
-        {/* Streak */}
-        <div className="bg-surface border border-border rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <div className="font-rajdhani font-bold text-3xl text-red leading-none">7</div>
-              <div className="font-mono text-[9px] text-muted tracking-widest mt-1">DAY STREAK 🔥</div>
-            </div>
-            <div className="flex gap-1.5">
-              {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                <div key={d} className="w-5 h-5 rounded-md bg-red opacity-80" />
-              ))}
-            </div>
-          </div>
-          <div className="font-mono text-[10px] text-muted">Longest streak: 7 days · Don't break the chain.</div>
+        {/* XP */}
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[10px] text-muted tracking-widest uppercase">XP Reward</span>
+          <span className="font-rajdhani font-bold text-xl text-gold">+{xp} XP</span>
         </div>
 
-        {/* Add Quest Sheet */}
-        {showAdd && (
-          <AddQuestSheet
-            onClose={() => setShowAdd(false)}
-            onSave={() => { setShowAdd(false); loadQuests() }}
-          />
-        )}
+        {/* Save */}
+        <button
+          onClick={save}
+          className="w-full bg-gold text-bg font-rajdhani font-bold text-lg py-3 rounded-xl tracking-widest uppercase transition-opacity hover:opacity-90 active:opacity-70"
+        >
+          Add Quest
+        </button>
       </div>
-    )
-  }
-
-  function AddQuestSheet({ onClose, onSave }: { onClose: () => void; onSave: () => void }) {
-    const [title, setTitle] = useState("")
-    const [category, setCategory] = useState("STRENGTH")
-    const [frequency, setFrequency] = useState<"daily" | "weekly" | "bi-weekly" | "monthly" | "semi-annually" | "bi-annually" | "annually" | "oneTime">("daily")
-    const [xp, setXp] = useState(25)
-
-    const categories = ["STRENGTH", "MIND", "WEALTH", "EXPLORER", "FOCUS", "HEALTH"]
-
-    const freqXP = {
-      daily: 25,
-      weekly: 100,
-      "bi-weekly": 75,
-      monthly: 150,
-      "semi-annually": 300,
-      "bi-annually": 200,
-      annually: 500,
-      oneTime: 50,
-    }
-
-    const freqLabels = {
-      daily: "Daily",
-      weekly: "Weekly",
-      "bi-weekly": "Bi-Weekly",
-      monthly: "Monthly",
-      "semi-annually": "Semi-Annual",
-      "bi-annually": "Bi-Annual",
-      annually: "Annually",
-      oneTime: "One-Time",
-    }
-
-    async function save() {
-      if (!title.trim()) return
-      await db.quests.add({
-        title: title.trim(),
-        category,
-        frequency,
-        xpReward: xp,
-        isCompleted: false,
-        createdAt: new Date(),
-      })
-      onSave()
-    }
-
-    return (
-      <div className="fixed inset-0 z-40 flex flex-col justify-end max-w-sm mx-auto left-1/2 -translate-x-1/2">
-        {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-
-        {/* Sheet */}
-        <div className="relative bg-surface border-t border-border rounded-t-2xl p-5 space-y-5 z-50">
-          <div className="flex items-center justify-between">
-            <span className="font-rajdhani font-bold text-lg text-gold tracking-wide">NEW QUEST</span>
-            <button onClick={onClose} className="text-muted text-xl leading-none">✕</button>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="font-mono text-[9px] text-muted tracking-widest uppercase block mb-2">Quest Title</label>
-            <input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="What's the mission?"
-              className="w-full bg-surface2 border border-border rounded-lg px-3 py-2.5 text-white text-sm font-sans outline-none focus:border-gold transition-colors placeholder:text-muted"
-            />
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="font-mono text-[9px] text-muted tracking-widest uppercase block mb-2">Category</label>
-            <div className="grid grid-cols-3 gap-2">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setCategory(cat)}
-                  className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${category === cat
-                    ? "border-gold bg-gold/10 text-gold"
-                    : "border-border text-muted hover:border-muted"
-                    }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Frequency */}
-          <div>
-            <label className="font-mono text-[9px] text-muted tracking-widest uppercase block mb-2">Frequency</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(freqLabels) as Array<keyof typeof freqLabels>).map(freq => (
-                <button
-                  key={freq}
-                  onClick={() => { setFrequency(freq); setXp(freqXP[freq]) }}
-                  className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${frequency === freq
-                    ? "border-purple bg-purple/10 text-purple"
-                    : "border-border text-muted hover:border-muted"
-                    }`}
-                >
-                  {freqLabels[freq]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* XP */}
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] text-muted tracking-widest uppercase">XP Reward</span>
-            <span className="font-rajdhani font-bold text-xl text-gold">+{xp} XP</span>
-          </div>
-
-          {/* Save */}
-          <button
-            onClick={save}
-            className="w-full bg-gold text-bg font-rajdhani font-bold text-lg py-3 rounded-xl tracking-widest uppercase transition-opacity hover:opacity-90 active:opacity-70"
-          >
-            Add Quest
-          </button>
-        </div>
-      </div>
-    )
-  }
+    </div>
+  )
+}

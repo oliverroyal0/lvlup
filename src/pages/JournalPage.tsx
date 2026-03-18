@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react"
 import { db, type JournalEntry, type Quest } from "../db"
 import { awardXP } from "../xpEngine"
+import { syncJournalEntryToCloud } from "../sync"
 
 const MOOD_CONFIG = {
   struggling: { emoji: "😔", label: "Struggling", color: "text-red", border: "border-red/40", bg: "bg-red/10" },
-  neutral:    { emoji: "😐", label: "Neutral",    color: "text-muted", border: "border-border", bg: "bg-surface2" },
-  good:       { emoji: "🙂", label: "Good",       color: "text-gold", border: "border-gold/40", bg: "bg-gold/10" },
-  great:      { emoji: "😄", label: "Great",      color: "text-cyan", border: "border-cyan/40", bg: "bg-cyan/10" },
-  "locked in":{ emoji: "🔥", label: "Locked In",  color: "text-purple", border: "border-purple/40", bg: "bg-purple/10" },
+  neutral: { emoji: "😐", label: "Neutral", color: "text-muted", border: "border-border", bg: "bg-surface2" },
+  good: { emoji: "🙂", label: "Good", color: "text-gold", border: "border-gold/40", bg: "bg-gold/10" },
+  great: { emoji: "😄", label: "Great", color: "text-cyan", border: "border-cyan/40", bg: "bg-cyan/10" },
+  "locked in": { emoji: "🔥", label: "Locked In", color: "text-purple", border: "border-purple/40", bg: "bg-purple/10" },
 }
 
 type Mood = keyof typeof MOOD_CONFIG
@@ -210,7 +211,7 @@ function EntryCard({ entry, onOpen, onDelete }: {
   )
 }
 
-function JournalEditor({ existing, onClose, onSave, onLevelUp}: {
+function JournalEditor({ existing, onClose, onSave, onLevelUp }: {
   existing: JournalEntry | null
   onClose: () => void
   onSave: () => void
@@ -252,38 +253,41 @@ function JournalEditor({ existing, onClose, onSave, onLevelUp}: {
   }
 
   async function save() {
-  if (!content.trim()) return
+    if (!content.trim()) return
 
-  if (existing?.id) {
-    await db.journalEntries.update(existing.id, {
-      content, mood, tags, linkedQuestIds,
-    })
-  } else {
-    await db.journalEntries.add({
-      content, mood, tags, linkedQuestIds,
-      createdAt: new Date(),
-    })
+    if (existing?.id) {
+      await db.journalEntries.update(existing.id, {
+        content, mood, tags, linkedQuestIds,
+      })
+    } else {
+      await db.journalEntries.add({
+        content, mood, tags, linkedQuestIds,
+        createdAt: new Date(),
+      })
 
-    // Award XP for new entry
-    const previousUser = await db.users.toCollection().first()
-    const previousRank = previousUser?.rank
-    const result = await awardXP(35)
-    const updatedUser = await db.users.toCollection().first()
-    const newRank = updatedUser?.rank
+      const saved = await db.journalEntries.orderBy("createdAt").last()
+      if (saved) await syncJournalEntryToCloud(saved)
 
-    if (result.leveledUp) {
-      const rankChanged = newRank && previousRank && newRank !== previousRank
-      onLevelUp(
-        rankChanged
-          ? `${previousRank} → ${newRank}`
-          : `Level ${result.newLevel} · Rank ${result.newRank}`,
-        !!rankChanged
-      )
+      // Award XP for new entry
+      const previousUser = await db.users.toCollection().first()
+      const previousRank = previousUser?.rank
+      const result = await awardXP(35)
+      const updatedUser = await db.users.toCollection().first()
+      const newRank = updatedUser?.rank
+
+      if (result.leveledUp) {
+        const rankChanged = newRank && previousRank && newRank !== previousRank
+        onLevelUp(
+          rankChanged
+            ? `${previousRank} → ${newRank}`
+            : `Level ${result.newLevel} · Rank ${result.newRank}`,
+          !!rankChanged
+        )
+      }
     }
-  }
 
-  onSave()
-}
+    onSave()
+  }
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col justify-end max-w-sm mx-auto left-1/2 -translate-x-1/2">
@@ -306,11 +310,10 @@ function JournalEditor({ existing, onClose, onSave, onLevelUp}: {
               <button
                 key={key}
                 onClick={() => setMood(key)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all ${
-                  mood === key
+                className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all ${mood === key
                     ? `${cfg.border} ${cfg.bg} ${cfg.color}`
                     : "border-border text-muted"
-                }`}
+                  }`}
               >
                 <span className="text-lg">{cfg.emoji}</span>
                 <span className="font-mono text-[8px] tracking-wide">{cfg.label.toUpperCase()}</span>
@@ -375,17 +378,15 @@ function JournalEditor({ existing, onClose, onSave, onLevelUp}: {
                 <div
                   key={quest.id}
                   onClick={() => toggleQuest(quest.id!)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-all ${
-                    linkedQuestIds.includes(quest.id!)
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-all ${linkedQuestIds.includes(quest.id!)
                       ? "border-green/40 bg-green/5"
                       : "border-border"
-                  }`}
+                    }`}
                 >
-                  <div className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] flex-shrink-0 ${
-                    linkedQuestIds.includes(quest.id!)
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] flex-shrink-0 ${linkedQuestIds.includes(quest.id!)
                       ? "bg-green border-green text-bg font-bold"
                       : "border-border"
-                  }`}>
+                    }`}>
                     {linkedQuestIds.includes(quest.id!) && "✓"}
                   </div>
                   <span className="text-sm text-muted">{quest.title}</span>

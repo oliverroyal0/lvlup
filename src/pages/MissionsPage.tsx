@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { db, type Mission } from "../db"
 import { awardXP, incrementStat } from "../xpEngine"
+import { syncMissionToCloud } from "../sync"
 
 const MISSION_COLORS = {
   main: { border: "border-gold/40", bg: "bg-gold/5", label: "text-gold", badge: "bg-gold/15 text-gold border-gold/30" },
@@ -46,33 +47,36 @@ export default function MissionsPage({ onUserUpdate, onLevelUp }: {
     const isNowComplete = newValue >= mission.targetValue
 
     await db.missions.update(mission.id, {
-    currentValue: newValue,
-    isCompleted: isNowComplete,
-    completedAt: isNowComplete ? new Date() : undefined,
-  })
+      currentValue: newValue,
+      isCompleted: isNowComplete,
+      completedAt: isNowComplete ? new Date() : undefined,
+    })
 
-  if (isNowComplete) {
-  const previousUser = await db.users.toCollection().first()
-  const previousRank = previousUser?.rank
-  const result = await awardXP(mission.xpReward)
-  await incrementStat(mission.category)
-  const updatedUser = await db.users.toCollection().first()
-  const newRank = updatedUser?.rank
-  onUserUpdate()
+    const updated = await db.missions.get(mission.id!)
+    if (updated) await syncMissionToCloud(updated)
 
-  if (result.leveledUp) {
-    const rankChanged = newRank && previousRank && newRank !== previousRank
-    onLevelUp(
-      rankChanged
-        ? `${previousRank} → ${newRank}`
-        : `Level ${result.newLevel} · Rank ${result.newRank}`,
-      !!rankChanged
-    )
+    if (isNowComplete) {
+      const previousUser = await db.users.toCollection().first()
+      const previousRank = previousUser?.rank
+      const result = await awardXP(mission.xpReward)
+      await incrementStat(mission.category)
+      const updatedUser = await db.users.toCollection().first()
+      const newRank = updatedUser?.rank
+      onUserUpdate()
+
+      if (result.leveledUp) {
+        const rankChanged = newRank && previousRank && newRank !== previousRank
+        onLevelUp(
+          rankChanged
+            ? `${previousRank} → ${newRank}`
+            : `Level ${result.newLevel} · Rank ${result.newRank}`,
+          !!rankChanged
+        )
+      }
+    }
+
+    loadMissions()
   }
-}
-
-  loadMissions()
-}
   async function deleteMission(id: number) {
     await db.missions.delete(id)
     loadMissions()
@@ -109,11 +113,10 @@ export default function MissionsPage({ onUserUpdate, onLevelUp }: {
           <button
             key={filter}
             onClick={() => setActiveFilter(filter)}
-            className={`flex-shrink-0 font-mono text-[10px] px-3 py-1.5 rounded-lg border transition-all tracking-wide ${
-              activeFilter === filter
-                ? "border-gold bg-gold/10 text-gold"
-                : "border-border text-muted"
-            }`}
+            className={`flex-shrink-0 font-mono text-[10px] px-3 py-1.5 rounded-lg border transition-all tracking-wide ${activeFilter === filter
+              ? "border-gold bg-gold/10 text-gold"
+              : "border-border text-muted"
+              }`}
           >
             {filter === "all" ? "ALL" : MISSION_LABELS[filter].toUpperCase()}
           </button>
@@ -166,7 +169,7 @@ export default function MissionsPage({ onUserUpdate, onLevelUp }: {
             <MissionCard
               key={mission.id}
               mission={mission}
-              onIncrement={() => {}}
+              onIncrement={() => { }}
               onDelete={() => mission.id && deleteMission(mission.id)}
             />
           ))}
@@ -228,14 +231,13 @@ function MissionCard({ mission, onIncrement, onDelete }: {
           </div>
           <div className="h-1.5 bg-border rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                mission.isCompleted
-                  ? "bg-green"
-                  : mission.missionType === "main" ? "bg-gradient-to-r from-purple to-gold"
+              className={`h-full rounded-full transition-all duration-500 ${mission.isCompleted
+                ? "bg-green"
+                : mission.missionType === "main" ? "bg-gradient-to-r from-purple to-gold"
                   : mission.missionType === "seasonal" ? "bg-cyan"
-                  : mission.missionType === "yearly" ? "bg-purple"
-                  : "bg-muted"
-              }`}
+                    : mission.missionType === "yearly" ? "bg-purple"
+                      : "bg-muted"
+                }`}
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -299,6 +301,8 @@ function AddMissionSheet({ onClose, onSave }: { onClose: () => void; onSave: () 
       deadline: hasDeadline && deadline ? new Date(deadline) : undefined,
       createdAt: new Date(),
     })
+    const saved = await db.missions.orderBy("createdAt").last()
+    if (saved) await syncMissionToCloud(saved)
     onSave()
   }
 
@@ -333,11 +337,10 @@ function AddMissionSheet({ onClose, onSave }: { onClose: () => void; onSave: () 
                 <button
                   key={type}
                   onClick={() => { setMissionType(type); setXpReward(typeXP[type]) }}
-                  className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${
-                    missionType === type
-                      ? `${colors.border} ${colors.bg} ${colors.label}`
-                      : "border-border text-muted"
-                  }`}
+                  className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${missionType === type
+                    ? `${colors.border} ${colors.bg} ${colors.label}`
+                    : "border-border text-muted"
+                    }`}
                 >
                   {MISSION_ICONS[type]} {MISSION_LABELS[type].toUpperCase()}
                 </button>
@@ -354,11 +357,10 @@ function AddMissionSheet({ onClose, onSave }: { onClose: () => void; onSave: () 
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${
-                  category === cat
-                    ? "border-gold bg-gold/10 text-gold"
-                    : "border-border text-muted"
-                }`}
+                className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${category === cat
+                  ? "border-gold bg-gold/10 text-gold"
+                  : "border-border text-muted"
+                  }`}
               >
                 {cat}
               </button>
