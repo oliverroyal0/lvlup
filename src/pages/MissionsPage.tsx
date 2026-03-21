@@ -5,10 +5,10 @@ import { awardXP, incrementStat } from "../xpEngine"
 import { syncMissionToCloud } from "../sync"
 
 const MISSION_COLORS = {
-  main:      { border: "border-gold/40",   bg: "bg-gold/5",   label: "text-gold",   badge: "bg-gold/15 text-gold border-gold/30" },
-  seasonal:  { border: "border-cyan/40",   bg: "bg-cyan/5",   label: "text-cyan",   badge: "bg-cyan/15 text-cyan border-cyan/30" },
-  yearly:    { border: "border-purple/40", bg: "bg-purple/5", label: "text-purple", badge: "bg-purple/15 text-purple border-purple/30" },
-  sideQuest: { border: "border-muted/40",  bg: "bg-surface",  label: "text-muted",  badge: "bg-surface2 text-muted border-border" },
+  main: { border: "border-gold/40", bg: "bg-gold/5", label: "text-gold", badge: "bg-gold/15 text-gold border-gold/30" },
+  seasonal: { border: "border-cyan/40", bg: "bg-cyan/5", label: "text-cyan", badge: "bg-cyan/15 text-cyan border-cyan/30" },
+  yearly: { border: "border-purple/40", bg: "bg-purple/5", label: "text-purple", badge: "bg-purple/15 text-purple border-purple/30" },
+  sideQuest: { border: "border-muted/40", bg: "bg-surface", label: "text-muted", badge: "bg-surface2 text-muted border-border" },
 }
 
 const MISSION_LABELS = {
@@ -125,11 +125,10 @@ export default function MissionsPage({ onUserUpdate, onLevelUp }: {
           <button
             key={filter}
             onClick={() => setActiveFilter(filter)}
-            className={`flex-shrink-0 font-mono text-[10px] px-3 py-1.5 rounded-lg border transition-all tracking-wide ${
-              activeFilter === filter
-                ? "border-gold bg-gold/10 text-gold"
-                : "border-border text-muted"
-            }`}
+            className={`flex-shrink-0 font-mono text-[10px] px-3 py-1.5 rounded-lg border transition-all tracking-wide ${activeFilter === filter
+              ? "border-gold bg-gold/10 text-gold"
+              : "border-border text-muted"
+              }`}
           >
             {filter === "all" ? "ALL" : MISSION_LABELS[filter].toUpperCase()}
           </button>
@@ -298,12 +297,11 @@ function MissionCard({ mission, isExpanded, onToggleExpand, onCompleteStep, onAr
           </div>
           <div className="h-1.5 bg-border rounded-full overflow-hidden">
             <motion.div
-              className={`h-full rounded-full ${
-                mission.isCompleted ? "bg-green" :
+              className={`h-full rounded-full ${mission.isCompleted ? "bg-green" :
                 mission.missionType === "main" ? "bg-gradient-to-r from-purple to-gold" :
-                mission.missionType === "seasonal" ? "bg-cyan" :
-                mission.missionType === "yearly" ? "bg-purple" : "bg-muted"
-              }`}
+                  mission.missionType === "seasonal" ? "bg-cyan" :
+                    mission.missionType === "yearly" ? "bg-purple" : "bg-muted"
+                }`}
               initial={{ width: 0 }}
               animate={{ width: `${pct}%` }}
               transition={{ duration: 0.5, ease: "easeOut" }}
@@ -321,16 +319,18 @@ function MissionCard({ mission, isExpanded, onToggleExpand, onCompleteStep, onAr
             {mission.deadline && (
               <span className="font-mono text-[10px] text-red">
                 📅 {new Date(mission.deadline).toLocaleDateString()}
+                {new Date(mission.deadline).getHours() !== 23 || new Date(mission.deadline).getMinutes() !== 59
+                  ? ` · ${new Date(mission.deadline).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                  : ""}
               </span>
             )}
           </div>
           <button
             onClick={onToggleExpand}
-            className={`font-mono text-[10px] px-3 py-1.5 rounded-lg border transition-all ${
-              isExpanded
-                ? "border-gold bg-gold/10 text-gold"
-                : "border-border text-muted hover:border-gold hover:text-gold"
-            }`}
+            className={`font-mono text-[10px] px-3 py-1.5 rounded-lg border transition-all ${isExpanded
+              ? "border-gold bg-gold/10 text-gold"
+              : "border-border text-muted hover:border-gold hover:text-gold"
+              }`}
           >
             {isExpanded ? "HIDE ↑" : "STEPS ↓"}
           </button>
@@ -368,11 +368,10 @@ function MissionCard({ mission, isExpanded, onToggleExpand, onCompleteStep, onAr
                     <button
                       onClick={() => { onCompleteStep(step, mission); loadSteps() }}
                       disabled={step.isCompleted || mission.isCompleted}
-                      className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-all ${
-                        step.isCompleted
-                          ? "bg-green border-green text-bg text-xs font-bold"
-                          : "border-border hover:border-gold"
-                      }`}
+                      className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-all ${step.isCompleted
+                        ? "bg-green border-green text-bg text-xs font-bold"
+                        : "border-border hover:border-gold"
+                        }`}
                     >
                       {step.isCompleted && "✓"}
                     </button>
@@ -446,6 +445,7 @@ function AddMissionSheet({ onClose, onSave }: { onClose: () => void; onSave: () 
   const [titleReward, setTitleReward] = useState("")
   const [hasDeadline, setHasDeadline] = useState(false)
   const [deadline, setDeadline] = useState("")
+  const [deadlineTime, setDeadlineTime] = useState("23:59")
   const [steps, setSteps] = useState<string[]>([])
   const [stepInput, setStepInput] = useState("")
 
@@ -475,7 +475,9 @@ function AddMissionSheet({ onClose, onSave }: { onClose: () => void; onSave: () 
       xpReward,
       titleReward: titleReward.trim() || undefined,
       isCompleted: false,
-      deadline: hasDeadline && deadline ? new Date(deadline) : undefined,
+      deadline: hasDeadline && deadline
+        ? new Date(`${deadline}T${deadlineTime || "23:59"}`)
+        : undefined,
       createdAt: new Date(),
     })
 
@@ -528,11 +530,10 @@ function AddMissionSheet({ onClose, onSave }: { onClose: () => void; onSave: () 
                 <button
                   key={type}
                   onClick={() => { setMissionType(type); setXpReward(typeXP[type]) }}
-                  className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${
-                    missionType === type
-                      ? `${colors.border} ${colors.bg} ${colors.label}`
-                      : "border-border text-muted"
-                  }`}
+                  className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${missionType === type
+                    ? `${colors.border} ${colors.bg} ${colors.label}`
+                    : "border-border text-muted"
+                    }`}
                 >
                   {MISSION_ICONS[type]} {MISSION_LABELS[type].toUpperCase()}
                 </button>
@@ -549,11 +550,10 @@ function AddMissionSheet({ onClose, onSave }: { onClose: () => void; onSave: () 
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${
-                  category === cat
-                    ? "border-gold bg-gold/10 text-gold"
-                    : "border-border text-muted"
-                }`}
+                className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${category === cat
+                  ? "border-gold bg-gold/10 text-gold"
+                  : "border-border text-muted"
+                  }`}
               >
                 {cat}
               </button>
@@ -636,12 +636,26 @@ function AddMissionSheet({ onClose, onSave }: { onClose: () => void; onSave: () 
             </button>
           </div>
           {hasDeadline && (
-            <input
-              type="date"
-              value={deadline}
-              onChange={e => setDeadline(e.target.value)}
-              className="w-full bg-surface2 border border-border rounded-lg px-3 py-2.5 text-white text-sm outline-none focus:border-red transition-colors"
-            />
+            <div className="space-y-2">
+              <div>
+                <label className="font-mono text-[9px] text-muted tracking-widest uppercase block mb-1.5">Date</label>
+                <input
+                  type="date"
+                  value={deadline}
+                  onChange={e => setDeadline(e.target.value)}
+                  className="w-full bg-surface2 border border-border rounded-lg px-3 py-2.5 text-white text-sm outline-none focus:border-red transition-colors"
+                />
+              </div>
+              <div>
+                <label className="font-mono text-[9px] text-muted tracking-widest uppercase block mb-1.5">Time (optional)</label>
+                <input
+                  type="time"
+                  value={deadlineTime}
+                  onChange={e => setDeadlineTime(e.target.value)}
+                  className="w-full bg-surface2 border border-border rounded-lg px-3 py-2.5 text-white text-sm outline-none focus:border-red transition-colors"
+                />
+              </div>
+            </div>
           )}
         </div>
 
