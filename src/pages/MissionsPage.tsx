@@ -307,9 +307,9 @@ function AddMissionSheet({ onClose, onSave }: { onClose: () => void; onSave: () 
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col justify-end max-w-sm mx-auto left-1/2 -translate-x-1/2">
+    <div className="fixed inset-0 z-40 flex flex-col justify-end left-0 right-0 max-w-sm mx-auto">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-      <div className="relative bg-surface border-t border-border rounded-t-2xl p-5 space-y-4 z-50 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-surface border-t border-border rounded-t-2xl p-5 space-y-4 z-50 max-h-[90vh] overflow-y-auto w-full">
 
         <div className="flex items-center justify-between">
           <span className="font-rajdhani font-bold text-lg text-gold tracking-wide">NEW MISSION</span>

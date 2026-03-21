@@ -27,7 +27,11 @@ export function BottomNav({ activeTab, onTabChange }: {
               <motion.div
                 layoutId="nav-indicator"
                 className="absolute top-0 w-6 h-0.5 bg-gold rounded-full"
-                style={{ left: "50%", transform: "translateX(-50%)" }}
+                style={{
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  marginLeft: 0,
+                }}
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
             )}

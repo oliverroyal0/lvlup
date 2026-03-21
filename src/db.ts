@@ -52,21 +52,32 @@ export interface User {
   title: string
 }
 
+export interface Streak {
+  id?: number
+  currentStreak: number
+  longestStreak: number
+  lastActiveDate: string
+  activeDays: string[]
+}
+
 export class LVLUpDatabase extends Dexie {
   quests!: Table<Quest>
   users!: Table<User>
   missions!: Table<Mission>
   statRecords!: Table<StatRecord>
   journalEntries!: Table<JournalEntry>
+  streaks!: Table<Streak>
+
 
   constructor() {
     super("lvlup-db")
-    this.version(4).stores({
-        quests: "++id, category, frequency, isCompleted, createdAt",
-        users: "++id, username",
-        missions: "++id, missionType, category, isCompleted, createdAt",
-        statRecords: "++id, category, updatedAt",
-        journalEntries: "++id, mood, createdAt",
+    this.version(5).stores({
+      quests: "++id, category, frequency, isCompleted, createdAt",
+      users: "++id, username",
+      missions: "++id, missionType, category, isCompleted, createdAt",
+      statRecords: "++id, category, updatedAt",
+      journalEntries: "++id, mood, createdAt",
+      streaks: "++id, lastActiveDate",
     })
   }
 }

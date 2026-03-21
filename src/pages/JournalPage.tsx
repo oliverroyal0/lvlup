@@ -271,7 +271,7 @@ function JournalEditor({ existing, onClose, onSave, onLevelUp }: {
       // Award XP for new entry
       const previousUser = await db.users.toCollection().first()
       const previousRank = previousUser?.rank
-      const result = await awardXP(35)
+      const result = await awardXP(10)
       const updatedUser = await db.users.toCollection().first()
       const newRank = updatedUser?.rank
 
@@ -290,9 +290,9 @@ function JournalEditor({ existing, onClose, onSave, onLevelUp }: {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col justify-end max-w-sm mx-auto left-1/2 -translate-x-1/2">
+    <div className="fixed inset-0 z-40 flex flex-col justify-end left-0 right-0 max-w-sm mx-auto">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-      <div className="relative bg-surface border-t border-border rounded-t-2xl p-5 space-y-4 z-50 max-h-[92vh] overflow-y-auto">
+      <div className="relative bg-surface border-t border-border rounded-t-2xl p-5 space-y-4 z-50 max-h-[92vh] overflow-y-auto w-full">
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -311,8 +311,8 @@ function JournalEditor({ existing, onClose, onSave, onLevelUp }: {
                 key={key}
                 onClick={() => setMood(key)}
                 className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all ${mood === key
-                    ? `${cfg.border} ${cfg.bg} ${cfg.color}`
-                    : "border-border text-muted"
+                  ? `${cfg.border} ${cfg.bg} ${cfg.color}`
+                  : "border-border text-muted"
                   }`}
               >
                 <span className="text-lg">{cfg.emoji}</span>
@@ -379,13 +379,13 @@ function JournalEditor({ existing, onClose, onSave, onLevelUp }: {
                   key={quest.id}
                   onClick={() => toggleQuest(quest.id!)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-all ${linkedQuestIds.includes(quest.id!)
-                      ? "border-green/40 bg-green/5"
-                      : "border-border"
+                    ? "border-green/40 bg-green/5"
+                    : "border-border"
                     }`}
                 >
                   <div className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] flex-shrink-0 ${linkedQuestIds.includes(quest.id!)
-                      ? "bg-green border-green text-bg font-bold"
-                      : "border-border"
+                    ? "bg-green border-green text-bg font-bold"
+                    : "border-border"
                     }`}>
                     {linkedQuestIds.includes(quest.id!) && "✓"}
                   </div>

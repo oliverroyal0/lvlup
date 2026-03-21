@@ -3,13 +3,13 @@ import { db, type User } from "../db"
 import { xpForNextLevel, rankFromLevel } from "../xpEngine"
 
 const RANK_COLORS: Record<string, string> = {
-  F: "text-muted border-muted/30 bg-muted/5",
-  E: "text-muted border-muted/40 bg-muted/10",
-  D: "text-cyan border-cyan/30 bg-cyan/5",
-  C: "text-cyan border-cyan/40 bg-cyan/10",
-  B: "text-purple border-purple/40 bg-purple/10",
-  A: "text-gold border-gold/40 bg-gold/10",
-  S: "text-gold border-gold bg-gold/20",
+  F: "text-muted border-muted/40 bg-surface2",
+  E: "text-muted border-muted/50 bg-surface2",
+  D: "text-cyan border-cyan/40 bg-cyan/20",
+  C: "text-cyan border-cyan/50 bg-cyan/25",
+  B: "text-purple border-purple/50 bg-purple/20",
+  A: "text-gold border-gold/50 bg-gold/20",
+  S: "text-gold border-gold bg-gold/30",
 }
 
 const ACHIEVEMENTS = [
