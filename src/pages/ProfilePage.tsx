@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { db, type User } from "../db"
 import { xpForNextLevel, rankFromLevel } from "../xpEngine"
+import { supabase } from "../supabase"
 
 const RANK_COLORS: Record<string, string> = {
   F: "text-muted border-muted/40 bg-surface2",
@@ -80,34 +81,66 @@ export default function ProfilePage({ user, onUserUpdate }: {
   }
 
   async function clearQuests() {
-    await db.quests.clear()
-    setShowClearData(false)
-    loadStats()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session) await supabase.from("quests").delete().eq("user_id", session.user.id)
+  await db.quests.clear()
+  setShowClearData(false)
+  loadStats()
+}
+
+async function clearMissions() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session) await supabase.from("missions").delete().eq("user_id", session.user.id)
+  await db.missions.clear()
+  setShowClearData(false)
+  loadStats()
+}
+
+async function clearJournal() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session) await supabase.from("journal_entries").delete().eq("user_id", session.user.id)
+  await db.journalEntries.clear()
+  setShowClearData(false)
+  loadStats()
+}
+
+async function clearAllData() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session) {
+    await supabase.from("quests").delete().eq("user_id", session.user.id)
+    await supabase.from("missions").delete().eq("user_id", session.user.id)
+    await supabase.from("journal_entries").delete().eq("user_id", session.user.id)
+    await supabase.from("stat_records").delete().eq("user_id", session.user.id)
+    await supabase.from("users").update({
+      level: 1,
+      current_xp: 0,
+      total_xp: 0,
+      rank: "F",
+      title: "Newcomer",
+    }).eq("id", session.user.id)
+  }
+  await db.quests.clear()
+  await db.missions.clear()
+  await db.journalEntries.clear()
+  await db.statRecords.clear()
+  await db.streaks.clear()
+
+  // Reset local user
+  const localUser = await db.users.toCollection().first()
+  if (localUser?.id) {
+    await db.users.update(localUser.id, {
+      level: 1,
+      currentXP: 0,
+      totalXP: 0,
+      rank: "F",
+      title: "Newcomer",
+    })
   }
 
-  async function clearMissions() {
-    await db.missions.clear()
-    setShowClearData(false)
-    loadStats()
-  }
-
-  async function clearJournal() {
-    await db.journalEntries.clear()
-    setShowClearData(false)
-    loadStats()
-  }
-
-  async function clearAllData() {
-    await db.quests.clear()
-    await db.missions.clear()
-    await db.journalEntries.clear()
-    await db.statRecords.clear()
-    await db.streaks.clear()
-    localStorage.removeItem("lvlup-onboarded")
-    setShowClearData(false)
-    window.location.reload()
-  }
-
+  localStorage.removeItem("lvlup-onboarded")
+  setShowClearData(false)
+  window.location.reload()
+}
   const xpNeeded = xpForNextLevel(user.level)
   const xpPct = Math.min((user.currentXP / xpNeeded) * 100, 100)
   const unlockedAchievements = ACHIEVEMENTS.filter(a => a.check(stats))

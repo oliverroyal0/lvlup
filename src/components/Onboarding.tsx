@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { db } from "../db"
+import { supabase } from "../supabase"
 
 const TITLES = [
   "The Grinder",
@@ -32,14 +33,16 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
       prev.includes(key)
         ? prev.filter(s => s !== key)
         : prev.length < 3
-        ? [...prev, key]
-        : prev
+          ? [...prev, key]
+          : prev
     )
   }
 
   async function finish() {
     if (!username.trim()) return
     setSaving(true)
+
+    const { data: { session } } = await supabase.auth.getSession()
 
     const existingUser = await db.users.toCollection().first()
     if (existingUser?.id) {
@@ -58,6 +61,19 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
       })
     }
 
+    // Sync username to Supabase immediately so it doesn't get overwritten
+    if (session) {
+      await supabase.from("users").upsert({
+        id: session.user.id,
+        username: username.trim(),
+        title: selectedTitle,
+        level: 1,
+        current_xp: 0,
+        total_xp: 0,
+        rank: "F",
+      })
+    }
+
     // Pre-seed stat records for focused categories
     for (const stat of focusStats) {
       const existing = await db.statRecords.where("category").equals(stat).first()
@@ -66,7 +82,6 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
       }
     }
 
-    // Mark onboarding complete
     localStorage.setItem("lvlup-onboarded", "true")
     setSaving(false)
     onComplete()
@@ -244,15 +259,13 @@ function IdentityStep({ username, setUsername, selectedTitle, setSelectedTitle, 
             <button
               key={title}
               onClick={() => setSelectedTitle(title)}
-              className={`py-3 px-3 rounded-xl border text-left transition-all ${
-                selectedTitle === title
+              className={`py-3 px-3 rounded-xl border text-left transition-all ${selectedTitle === title
                   ? "border-gold bg-gold/10"
                   : "border-border bg-surface"
-              }`}
+                }`}
             >
-              <div className={`font-mono text-[10px] tracking-wide ${
-                selectedTitle === title ? "text-gold" : "text-muted"
-              }`}>
+              <div className={`font-mono text-[10px] tracking-wide ${selectedTitle === title ? "text-gold" : "text-muted"
+                }`}>
                 {title}
               </div>
             </button>
@@ -318,13 +331,12 @@ function FocusStep({ focusStats, toggleStat, onFinish, saving, canFinish }: {
               onClick={() => toggleStat(stat.key)}
               disabled={isDisabled}
               whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all text-left ${
-                isSelected
+              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all text-left ${isSelected
                   ? "border-gold bg-gold/8"
                   : isDisabled
-                  ? "border-border opacity-30"
-                  : "border-border bg-surface hover:border-border/80"
-              }`}
+                    ? "border-border opacity-30"
+                    : "border-border bg-surface hover:border-border/80"
+                }`}
             >
               <span className="text-2xl flex-shrink-0">{stat.icon}</span>
               <div className="flex-1">
@@ -333,9 +345,8 @@ function FocusStep({ focusStats, toggleStat, onFinish, saving, canFinish }: {
                 </div>
                 <div className="font-mono text-[9px] text-muted mt-0.5">{stat.desc}</div>
               </div>
-              <div className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-all ${
-                isSelected ? "bg-gold border-gold text-bg text-xs font-bold" : "border-border"
-              }`}>
+              <div className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? "bg-gold border-gold text-bg text-xs font-bold" : "border-border"
+                }`}>
                 {isSelected && "✓"}
               </div>
             </motion.button>
@@ -348,9 +359,8 @@ function FocusStep({ focusStats, toggleStat, onFinish, saving, canFinish }: {
         {[0, 1, 2].map(i => (
           <div
             key={i}
-            className={`w-2 h-2 rounded-full transition-all ${
-              i < focusStats.length ? "bg-gold" : "bg-border"
-            }`}
+            className={`w-2 h-2 rounded-full transition-all ${i < focusStats.length ? "bg-gold" : "bg-border"
+              }`}
           />
         ))}
       </div>
