@@ -51,6 +51,7 @@ export default function ProfilePage({ user, onUserUpdate }: {
   const [isEditingName, setIsEditingName] = useState(false)
   const [nameInput, setNameInput] = useState(user.username)
   const [activeTab, setActiveTab] = useState<"achievements" | "history">("achievements")
+  const [showClearData, setShowClearData] = useState(false)
 
   useEffect(() => { loadStats() }, [user])
 
@@ -76,6 +77,35 @@ export default function ProfilePage({ user, onUserUpdate }: {
     await db.users.update(user.id, { username: nameInput.trim() })
     onUserUpdate()
     setIsEditingName(false)
+  }
+
+  async function clearQuests() {
+    await db.quests.clear()
+    setShowClearData(false)
+    loadStats()
+  }
+
+  async function clearMissions() {
+    await db.missions.clear()
+    setShowClearData(false)
+    loadStats()
+  }
+
+  async function clearJournal() {
+    await db.journalEntries.clear()
+    setShowClearData(false)
+    loadStats()
+  }
+
+  async function clearAllData() {
+    await db.quests.clear()
+    await db.missions.clear()
+    await db.journalEntries.clear()
+    await db.statRecords.clear()
+    await db.streaks.clear()
+    localStorage.removeItem("lvlup-onboarded")
+    setShowClearData(false)
+    window.location.reload()
   }
 
   const xpNeeded = xpForNextLevel(user.level)
@@ -187,11 +217,10 @@ export default function ProfilePage({ user, onUserUpdate }: {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2.5 rounded-xl border font-mono text-[10px] tracking-widest uppercase transition-all ${
-              activeTab === tab
+            className={`flex-1 py-2.5 rounded-xl border font-mono text-[10px] tracking-widest uppercase transition-all ${activeTab === tab
                 ? "border-gold bg-gold/10 text-gold"
                 : "border-border text-muted"
-            }`}
+              }`}
           >
             {tab === "achievements" ? "🏆 Achievements" : "📜 History"}
           </button>
@@ -253,6 +282,79 @@ export default function ProfilePage({ user, onUserUpdate }: {
       {/* History tab */}
       {activeTab === "history" && (
         <HistoryTab />
+      )}
+
+      {/* Settings section */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-4 h-px bg-red"></div>
+          <span className="font-mono text-[10px] text-muted tracking-widest uppercase">Data Management</span>
+        </div>
+        <button
+          onClick={() => setShowClearData(true)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-surface border border-border rounded-xl hover:border-red/40 transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🗑️</span>
+            <div className="text-left">
+              <div className="font-rajdhani font-bold text-sm text-white">Clear Data</div>
+              <div className="font-mono text-[9px] text-muted mt-0.5">Manage or reset your data</div>
+            </div>
+          </div>
+          <span className="font-mono text-[10px] text-muted">→</span>
+        </button>
+      </div>
+
+      {/* Clear Data Modal */}
+      {showClearData && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center left-0 right-0 max-w-sm mx-auto">
+          <div className="absolute inset-0 bg-black/80" onClick={() => setShowClearData(false)} />
+          <div className="relative w-full bg-surface border-t border-border rounded-t-2xl p-5 space-y-3 z-50">
+
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-rajdhani font-bold text-lg text-white tracking-wide">Clear Data</span>
+              <button onClick={() => setShowClearData(false)} className="text-muted text-xl">✕</button>
+            </div>
+
+            <div className="font-mono text-[10px] text-muted tracking-wide mb-4">
+              Select what you want to clear. This cannot be undone.
+            </div>
+
+            {/* Individual clear options */}
+            {[
+              { label: "Clear Quests", sub: "Remove all quest history", icon: "⚔️", action: clearQuests, color: "hover:border-cyan/40" },
+              { label: "Clear Missions", sub: "Remove all mission history", icon: "🎯", action: clearMissions, color: "hover:border-purple/40" },
+              { label: "Clear Journal", sub: "Remove all journal entries", icon: "📖", action: clearJournal, color: "hover:border-orange/40" },
+            ].map(item => (
+              <button
+                key={item.label}
+                onClick={item.action}
+                className={`w-full flex items-center gap-3 px-4 py-3 bg-surface2 border border-border rounded-xl transition-all ${item.color}`}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <div className="text-left flex-1">
+                  <div className="font-rajdhani font-bold text-sm text-white">{item.label}</div>
+                  <div className="font-mono text-[9px] text-muted mt-0.5">{item.sub}</div>
+                </div>
+              </button>
+            ))}
+
+            {/* Divider */}
+            <div className="h-px bg-border my-2" />
+
+            {/* Nuclear option */}
+            <button
+              onClick={clearAllData}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-red/10 border border-red/30 rounded-xl hover:bg-red/20 transition-all"
+            >
+              <span className="text-lg">💥</span>
+              <div className="text-left flex-1">
+                <div className="font-rajdhani font-bold text-sm text-red">Reset Everything</div>
+                <div className="font-mono text-[9px] text-muted mt-0.5">Wipe all data and start fresh</div>
+              </div>
+            </button>
+          </div>
+        </div>
       )}
 
     </div>
@@ -323,7 +425,11 @@ function HistoryTab() {
             ))}
           </div>
         )}
+
       </div>
+
+
     </div>
   )
 }
+
