@@ -24,6 +24,7 @@ export interface Mission {
   deadline?: Date
   createdAt: Date
   completedAt?: Date
+  isArchived?: boolean
 }
 
 export interface StatRecord {
@@ -60,6 +61,16 @@ export interface Streak {
   activeDays: string[]
 }
 
+export interface MissionStep {
+  id?: number
+  missionId: number
+  title: string
+  isCompleted: boolean
+  xpReward: number
+  createdAt: Date
+  completedAt?: Date
+}
+
 export class LVLUpDatabase extends Dexie {
   quests!: Table<Quest>
   users!: Table<User>
@@ -67,17 +78,19 @@ export class LVLUpDatabase extends Dexie {
   statRecords!: Table<StatRecord>
   journalEntries!: Table<JournalEntry>
   streaks!: Table<Streak>
+  missionSteps!: Table<MissionStep>
 
 
   constructor() {
     super("lvlup-db")
-    this.version(5).stores({
+    this.version(6).stores({
       quests: "++id, category, frequency, isCompleted, createdAt",
       users: "++id, username",
       missions: "++id, missionType, category, isCompleted, createdAt",
       statRecords: "++id, category, updatedAt",
       journalEntries: "++id, mood, createdAt",
       streaks: "++id, lastActiveDate",
+      missionSteps: "++id, missionId, isCompleted, createdAt",
     })
   }
 }
