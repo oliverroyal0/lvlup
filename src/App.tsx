@@ -1,26 +1,29 @@
 import { useState, useEffect } from "react"
-import { db, initUser, type Quest, type User } from "./db"
-import { awardXP, incrementStat } from "./xpEngine"
-import MissionsPage from "./pages/MissionsPage"
-import StatsPage from "./pages/StatsPage"
-import JournalPage from "./pages/JournalPage"
-import ProfilePage from "./pages/ProfilePage"
-import { PageTransition } from "./components/PageTransition"
-import { BottomNav } from "./components/BottomNav"
-import { LevelUpOverlay } from "./components/LevelUpOverlay"
-import { Onboarding } from "./components/Onboarding"
-import { Auth } from "./components/Auth"
-import { supabase } from "./supabase"
 import { type Session } from "@supabase/supabase-js"
+import { supabase } from "./supabase"
+import { db, type User, type Quest } from "./db"
+import { initUser } from "./db"
+import { awardXP, incrementStat } from "./xpEngine"
 import { pullFromCloud, syncQuestToCloud } from "./sync"
 import { updateStreak, getCurrentStreak } from "./streakEngine"
 import { requestNotificationPermission, scheduleDailyReminder } from "./notificationEngine"
-import QuestsPage from "./pages/QuestsPage"
+import { Auth } from "./components/Auth"
+import { Onboarding } from "./components/Onboarding"
+import { BottomNav } from "./components/BottomNav"
+import { PageTransition } from "./components/PageTransition"
+import { LevelUpOverlay } from "./components/LevelUpOverlay"
 import { StreakPopup } from "./components/StreakPopup"
+import { PlayHub } from "./components/PlayHub"
+import { LifeHub } from "./components/LifeHub"
+import StatsPage from "./pages/StatsPage"
+import ProfilePage from "./pages/ProfilePage"
 import { type Streak } from "./db"
 
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState("quests")
+  const [activeTab, setActiveTab] = useState("play")
+  const [playSubTab, setPlaySubTab] = useState("quests")
+  const [lifeSubTab, setLifeSubTab] = useState("travel")
   const [user, setUser] = useState<User | null>(null)
   const [levelUpMsg, setLevelUpMsg] = useState<string | null>(null)
   const [isRankUp, setIsRankUp] = useState(false)
@@ -124,25 +127,21 @@ export default function App() {
     return <Auth onAuth={() => supabase.auth.getSession().then(({ data: { session } }) => setSession(session))} />
   }
 
-
   if (!onboarded) {
     return <Onboarding onComplete={() => { setOnboarded(true); initUser().then(loadUser) }} />
   }
 
-
-
   return (
-
-
     <div className="min-h-screen bg-bg text-white flex flex-col max-w-sm mx-auto relative">
 
-      {/* Level up pop-up */}
+      {/* Level up + rank up overlay */}
       <LevelUpOverlay
         message={levelUpMsg}
         isRankUp={isRankUp}
-        onDone={() => { setLevelUpMsg(null); setIsRankUp(false) }} />
+        onDone={() => { setLevelUpMsg(null); setIsRankUp(false) }}
+      />
 
-      {/* streak pop-up */}
+      {/* Streak popup */}
       <StreakPopup
         streak={streak}
         activeDays={streakData?.activeDays ?? []}
@@ -170,47 +169,58 @@ export default function App() {
             onClick={() => supabase.auth.signOut()}
             className="font-mono text-[9px] text-muted hover:text-red transition-colors tracking-widest border border-border rounded-md px-2 py-1.5"
           >
-            Logout
+            EXIT
           </button>
         </div>
       </div>
 
       {/* Page content */}
-      <div className="flex-1 overflow-y-auto pb-24 px-5 pt-5">
+      <div className="flex-1 overflow-hidden flex flex-col">
         <PageTransition tabKey={activeTab}>
-          {activeTab === "quests" && user && (
-            <QuestsPage user={user} onQuestComplete={handleQuestComplete} streak={streak} longestStreak={longestStreak} />
-          )}
-
-          {activeTab === "missions" && (
-            <MissionsPage onUserUpdate={loadUser} onLevelUp={(msg, rankUp) => {
-              setIsRankUp(rankUp)
-              setLevelUpMsg(msg)
-            }} />
-          )}
-
-          {activeTab === "stats" && user && (
-            <StatsPage user={user} />
-          )}
-
-          {activeTab === "journal" && (
-            <JournalPage
+          {activeTab === "play" && user && (
+            <PlayHub
+              activeSubTab={playSubTab}
+              onSubTabChange={setPlaySubTab}
+              user={user}
+              onQuestComplete={handleQuestComplete}
+              streak={streak}
+              longestStreak={longestStreak}
+              onUserUpdate={loadUser}
               onLevelUp={(msg, rankUp) => {
                 setIsRankUp(rankUp)
                 setLevelUpMsg(msg)
-              }} />
+              }}
+            />
+          )}
+          {activeTab === "stats" && user && (
+            <div className="flex-1 overflow-y-auto px-5 pt-5 pb-24">
+              <StatsPage user={user} />
+            </div>
+          )}
+          {activeTab === "life" && (
+            <LifeHub
+              activeSubTab={lifeSubTab}
+              onSubTabChange={setLifeSubTab}
+            />
+          )}
+          {activeTab === "guild" && (
+            <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-30 px-5 pt-5">
+              <span className="text-5xl">👥</span>
+              <span className="font-rajdhani font-bold text-2xl tracking-widest uppercase text-cyan">Guild</span>
+              <span className="font-mono text-xs text-muted">Coming in v2.5</span>
+            </div>
           )}
           {activeTab === "profile" && user && (
-            <ProfilePage user={user} onUserUpdate={loadUser} />
+            <div className="flex-1 overflow-y-auto px-5 pt-5 pb-24">
+              <ProfilePage user={user} onUserUpdate={loadUser} />
+            </div>
           )}
         </PageTransition>
       </div>
 
       {/* Bottom nav */}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+
     </div>
   )
-
-
 }
-
