@@ -4,12 +4,13 @@ import MissionsPage from "../pages/MissionsPage"
 import JournalPage from "../pages/JournalPage"
 import { type User, type Quest } from "../db"
 import { PageTransition } from "./PageTransition"
+import HabitsPage from "../pages/HabitsPage"
 
 const PLAY_TABS = [
-  { id: "quests",   icon: "⚔️", label: "Quests"   },
-  { id: "missions", icon: "🎯", label: "Missions"  },
-  { id: "habits",   icon: "🔄", label: "Habits"    },
-  { id: "journal",  icon: "📖", label: "Journal"   },
+  { id: "quests", icon: "⚔️", label: "Quests" },
+  { id: "missions", icon: "🎯", label: "Missions" },
+  { id: "habits", icon: "🔄", label: "Habits" },
+  { id: "journal", icon: "📖", label: "Journal" },
 ]
 
 export function PlayHub({ activeSubTab, onSubTabChange, user, onQuestComplete, streak, longestStreak, onUserUpdate, onLevelUp }: {
@@ -46,11 +47,10 @@ export function PlayHub({ activeSubTab, onSubTabChange, user, onQuestComplete, s
             />
           )}
           {activeSubTab === "habits" && (
-            <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-30">
-              <span className="text-5xl">🔄</span>
-              <span className="font-rajdhani font-bold text-2xl tracking-widest uppercase text-gold">Habits</span>
-              <span className="font-mono text-xs text-muted">Coming next</span>
-            </div>
+            <HabitsPage
+              onUserUpdate={onUserUpdate}
+              onLevelUp={onLevelUp}
+            />
           )}
           {activeSubTab === "journal" && (
             <JournalPage onLevelUp={onLevelUp} />

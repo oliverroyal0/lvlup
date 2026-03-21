@@ -71,6 +71,19 @@ export interface MissionStep {
   completedAt?: Date
 }
 
+export interface Habit {
+  id?: number
+  title: string
+  category: string
+  xpReward: number
+  currentStreak: number
+  longestStreak: number
+  lastCompletedDate: string
+  completedDates: string[]
+  createdAt: Date
+  isArchived?: boolean
+}
+
 export class LVLUpDatabase extends Dexie {
   quests!: Table<Quest>
   users!: Table<User>
@@ -79,11 +92,12 @@ export class LVLUpDatabase extends Dexie {
   journalEntries!: Table<JournalEntry>
   streaks!: Table<Streak>
   missionSteps!: Table<MissionStep>
+  habits!: Table<Habit>
 
 
   constructor() {
     super("lvlup-db")
-    this.version(6).stores({
+    this.version(7).stores({
       quests: "++id, category, frequency, isCompleted, createdAt",
       users: "++id, username",
       missions: "++id, missionType, category, isCompleted, createdAt",
@@ -91,6 +105,7 @@ export class LVLUpDatabase extends Dexie {
       journalEntries: "++id, mood, createdAt",
       streaks: "++id, lastActiveDate",
       missionSteps: "++id, missionId, isCompleted, createdAt",
+      habits: "++id, category, lastCompletedDate, createdAt",
     })
   }
 }
