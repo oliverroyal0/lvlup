@@ -82,6 +82,9 @@ PLAYER CONTEXT:
         if (usedCalls >= MAX_FREE_CALLS) return
 
         const userMessage: Message = { role: "user", content: text }
+
+        // Try multiple regex patterns to catch different formatting
+        
         setMessages(prev => [...prev, userMessage])
         setInput("")
         setLoading(true)
@@ -141,7 +144,7 @@ RESPONSE RULES:
 
             // Parse actions from JSON blocks
             const actions: AIAction[] = []
-            const jsonRegex = /```json\n([\s\S]*?)\n```/g
+            const jsonRegex = /```json\r?\n([\s\S]*?)\r?\n?```/g
             let match
             while ((match = jsonRegex.exec(rawContent)) !== null) {
                 try {
@@ -217,16 +220,10 @@ RESPONSE RULES:
         }
     }
 
-    const actionLabels: Record<string, string> = {
-        addQuest: "➕ Add as Quest",
-        addHabit: "➕ Add as Habit",
-        addMission: "➕ Add as Mission",
-    }
-
     const actionColors: Record<string, string> = {
-        addQuest: "border-cyan/40 bg-cyan/10 text-cyan hover:bg-cyan/20",
-        addHabit: "border-purple/40 bg-purple/10 text-purple hover:bg-purple/20",
-        addMission: "border-gold/40 bg-gold/10 text-gold hover:bg-gold/20",
+        addQuest: "border-cyan/30   bg-cyan/5   hover:bg-cyan/10   hover:border-cyan/50",
+        addHabit: "border-purple/30 bg-purple/5 hover:bg-purple/10 hover:border-purple/50",
+        addMission: "border-gold/30   bg-gold/5   hover:bg-gold/10   hover:border-gold/50",
     }
 
     return (
@@ -293,7 +290,6 @@ RESPONSE RULES:
                                                 <ActionButton
                                                     key={j}
                                                     action={action}
-                                                    label={actionLabels[action.type] ?? "Add"}
                                                     colorClass={actionColors[action.type] ?? "border-border text-muted"}
                                                     onExecute={executeAction}
                                                 />
@@ -347,30 +343,88 @@ RESPONSE RULES:
     )
 }
 
-function ActionButton({ action, label, colorClass, onExecute }: {
+function ActionButton({ action, colorClass, onExecute }: {
     action: AIAction
-    label: string
     colorClass: string
     onExecute: (action: AIAction) => void
 }) {
     const [done, setDone] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    const typeIcons: Record<string, string> = {
+        addQuest: "⚔️",
+        addHabit: "🔄",
+        addMission: "🎯",
+    }
+
+    const typeLabels: Record<string, string> = {
+        addQuest: "Quest",
+        addHabit: "Habit",
+        addMission: "Mission",
+    }
 
     async function handleClick() {
-        if (done) return
+        if (done || loading) return
+        setLoading(true)
         await onExecute(action)
+        setLoading(false)
         setDone(true)
     }
 
     return (
-        <button
+        <motion.button
             onClick={handleClick}
-            disabled={done}
-            className={`w-full text-left px-3 py-2 rounded-lg border font-mono text-[10px] tracking-wide transition-all ${done
-                ? "border-green/30 bg-green/10 text-green cursor-default"
+            disabled={done || loading}
+            whileTap={{ scale: 0.97 }}
+            className={`w-full rounded-xl border transition-all overflow-hidden ${done
+                ? "border-green/30 bg-green/5"
                 : colorClass
                 }`}
         >
-            {done ? "✓ Added!" : `${label}: "${action.payload.title}"`}
-        </button>
+            <div className="flex items-center gap-3 px-3 py-2.5">
+                {/* Type icon */}
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-sm ${done ? "bg-green/20" : "bg-black/20"
+                    }`}>
+                    {done ? "✓" : typeIcons[action.type] ?? "➕"}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 text-left min-w-0">
+                    <div className={`font-mono text-[9px] tracking-widest uppercase mb-0.5 ${done ? "text-green" : "text-muted"
+                        }`}>
+                        {done ? "Added to your app" : `Add as ${typeLabels[action.type] ?? "item"}`}
+                    </div>
+                    <div className={`text-sm font-medium truncate ${done ? "text-green" : "text-white"}`}>
+                        {action.payload.title}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                        <span className="font-mono text-[9px] text-muted">
+                            {action.payload.category}
+                        </span>
+                        {action.payload.frequency && (
+                            <span className="font-mono text-[9px] text-muted">
+                                · {action.payload.frequency}
+                            </span>
+                        )}
+                        <span className="font-mono text-[9px] text-gold ml-auto">
+                            +{action.payload.xpReward} XP
+                        </span>
+                    </div>
+                </div>
+
+                {/* Arrow / loading */}
+                <div className="flex-shrink-0">
+                    {loading ? (
+                        <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                            className="w-4 h-4 border border-muted border-t-transparent rounded-full"
+                        />
+                    ) : done ? null : (
+                        <span className="text-muted text-sm">→</span>
+                    )}
+                </div>
+            </div>
+        </motion.button>
     )
 }
