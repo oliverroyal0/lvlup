@@ -108,6 +108,11 @@ PERSONALITY:
 - Use their name naturally in conversation
 - Speak like a mentor who knows them well — not a generic chatbot
 - Keep energy high but grounded — motivating without being fake
+- Keep responses somewhat short — max 3 sentences of advice before action blocks
+- Be punchy and direct — no fluff, no long explanations
+- Let the action buttons do the heavy lifting, not the text
+- After first response, adapt tone based on user's style — mirror their energy and language
+
 
 CONVERSATION RULES:
 - Always continue the conversation — never give a dead-end response
@@ -219,13 +224,6 @@ CROSS-AREA CONNECTIONS:
                 followUps,
             }])
 
-            const assistantMessage: Message = {
-                role: "assistant",
-                content: cleanContent,
-                actions,
-            }
-            setMessages(prev => [...prev, assistantMessage])
-
         } catch (err) {
             setMessages(prev => [...prev, {
                 role: "assistant",
@@ -332,10 +330,13 @@ CROSS-AREA CONNECTIONS:
                         {/* Message thread */}
                         {messages.map((msg, i) => (
                             <div key={i} className={`flex flex-col gap-1.5 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                                <div className={`max-w-[88%] px-3 py-2 rounded-xl text-sm leading-relaxed ${msg.role === "user"
-                                        ? "bg-purple/20 border border-purple/30 text-white rounded-br-sm"
-                                        : "bg-surface2 border border-border text-muted rounded-bl-sm"
-                                    }`}>
+                                <div
+                                    className={`max-w-[88%] px-3 py-2 rounded-xl text-sm leading-relaxed ${msg.role === "user"
+                                            ? "bg-purple/20 border border-purple/30 text-white rounded-br-sm"
+                                            : "bg-surface2 border border-purple/20 text-[#d4d0e8] rounded-bl-sm"
+                                        }`}
+                                    style={msg.role === "assistant" ? { boxShadow: "0 0 12px rgba(155,111,240,0.08)" } : {}}
+                                >
                                     {msg.content}
                                 </div>
 
