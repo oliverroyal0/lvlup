@@ -70,6 +70,7 @@ const AI_CONTEXTS: Record<string, { systemPrompt: string; suggestions: string[] 
   },
 }
 
+
 function ComingSoon({ title, icon }: { title: string; icon: string }) {
   return (
     <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-30">
@@ -80,7 +81,7 @@ function ComingSoon({ title, icon }: { title: string; icon: string }) {
   )
 }
 
-export function LifeHub({ activeSubTab, onSubTabChange,  aiOpen, onAIClose }: {
+export function LifeHub({ activeSubTab, onSubTabChange, aiOpen, onAIClose }: {
   activeSubTab: string
   onSubTabChange: (tab: string) => void
   aiOpen: boolean

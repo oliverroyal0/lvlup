@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { SubNav } from "./SubNav"
 import QuestsPage from "../pages/QuestsPage"
 import MissionsPage from "../pages/MissionsPage"
@@ -8,10 +9,10 @@ import { PageTransition } from "./PageTransition"
 import { AIPanel } from "./AIPanel"
 
 const PLAY_TABS = [
-  { id: "quests", icon: "⚔️", label: "Quests" },
-  { id: "missions", icon: "🎯", label: "Missions" },
-  { id: "habits", icon: "🔄", label: "Habits" },
-  { id: "journal", icon: "📖", label: "Journal" },
+  { id: "quests",   icon: "⚔️", label: "Quests"   },
+  { id: "missions", icon: "🎯", label: "Missions"  },
+  { id: "habits",   icon: "🔄", label: "Habits"    },
+  { id: "journal",  icon: "📖", label: "Journal"   },
 ]
 
 const AI_CONTEXTS: Record<string, { systemPrompt: string; suggestions: string[] }> = {
@@ -73,6 +74,11 @@ export function PlayHub({ activeSubTab, onSubTabChange, user, onQuestComplete, s
   aiOpen: boolean
   onAIClose: () => void
 }) {
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  function handleAIAction() {
+    setRefreshKey(prev => prev + 1)
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -82,14 +88,13 @@ export function PlayHub({ activeSubTab, onSubTabChange, user, onQuestComplete, s
         onItemChange={(tab) => { onSubTabChange(tab) }}
       />
 
-      {/* AI Panel — slides in under sub-nav */}
       {aiOpen && (
         <AIPanel
           context={{
             screen: activeSubTab,
             systemPrompt: AI_CONTEXTS[activeSubTab]?.systemPrompt ?? AI_CONTEXTS.quests.systemPrompt,
             suggestions: AI_CONTEXTS[activeSubTab]?.suggestions ?? AI_CONTEXTS.quests.suggestions,
-            onAction: () => { },
+            onAction: handleAIAction,
           }}
           onClose={onAIClose}
         />
@@ -99,6 +104,7 @@ export function PlayHub({ activeSubTab, onSubTabChange, user, onQuestComplete, s
         <PageTransition tabKey={activeSubTab}>
           {activeSubTab === "quests" && (
             <QuestsPage
+              key={refreshKey}
               user={user}
               onQuestComplete={onQuestComplete}
               streak={streak}
@@ -107,18 +113,23 @@ export function PlayHub({ activeSubTab, onSubTabChange, user, onQuestComplete, s
           )}
           {activeSubTab === "missions" && (
             <MissionsPage
+              key={refreshKey}
               onUserUpdate={onUserUpdate}
               onLevelUp={onLevelUp}
             />
           )}
           {activeSubTab === "habits" && (
             <HabitsPage
+              key={refreshKey}
               onUserUpdate={onUserUpdate}
               onLevelUp={onLevelUp}
             />
           )}
           {activeSubTab === "journal" && (
-            <JournalPage onLevelUp={onLevelUp} />
+            <JournalPage
+              key={refreshKey}
+              onLevelUp={onLevelUp}
+            />
           )}
         </PageTransition>
       </div>

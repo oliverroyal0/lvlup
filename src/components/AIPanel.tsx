@@ -332,8 +332,8 @@ CROSS-AREA CONNECTIONS:
                             <div key={i} className={`flex flex-col gap-1.5 ${msg.role === "user" ? "items-end" : "items-start"}`}>
                                 <div
                                     className={`max-w-[88%] px-3 py-2 rounded-xl text-sm leading-relaxed ${msg.role === "user"
-                                            ? "bg-purple/20 border border-purple/30 text-white rounded-br-sm"
-                                            : "bg-surface2 border border-purple/20 text-[#d4d0e8] rounded-bl-sm"
+                                        ? "bg-purple/20 border border-purple/30 text-white rounded-br-sm"
+                                        : "bg-surface2 border border-purple/20 text-[#d4d0e8] rounded-bl-sm"
                                         }`}
                                     style={msg.role === "assistant" ? { boxShadow: "0 0 12px rgba(155,111,240,0.08)" } : {}}
                                 >
