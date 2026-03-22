@@ -250,6 +250,7 @@ CROSS-AREA CONNECTIONS:
                     title: action.payload.title,
                     category: action.payload.category ?? "FOCUS",
                     frequency: action.payload.frequency ?? "daily",
+                    timeOfDay: action.payload.timeOfDay ?? "anytime",
                     xpReward: action.payload.xpReward ?? 20,
                     currentStreak: 0,
                     longestStreak: 0,
