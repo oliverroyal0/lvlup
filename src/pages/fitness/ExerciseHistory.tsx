@@ -82,9 +82,6 @@ export default function ExerciseHistory({ profile }: { profile: FitnessProfile }
           {filtered.map(group => {
             const isExpanded = expanded === group.exerciseId
             const latestSet = group.sets[0]
-            const latestWeight = profile.units === "imperial"
-              ? latestSet?.weightLbs
-              : latestSet?.weightKg
             const maxWeight = Math.max(...group.sets.map(s =>
               profile.units === "imperial" ? s.weightLbs ?? 0 : s.weightKg ?? 0
             ))

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { db, type Exercise, } from "../../db"
 
 const CATEGORY_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
   strength:     { icon: "💪", color: "text-cyan",   label: "Strength"     },
