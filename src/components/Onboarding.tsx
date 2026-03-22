@@ -19,6 +19,7 @@ const STAT_OPTIONS = [
   { key: "EXPLORER", icon: "🌍", label: "Explorer", desc: "Travel, new experiences" },
   { key: "FOCUS", icon: "🎯", label: "Focus", desc: "Productivity, deep work, habits" },
   { key: "HEALTH", icon: "❤️", label: "Health", desc: "Sleep, nutrition, wellness" },
+  { key: "HOME", icon: "🏠", label: "Home", desc: "Cleaning, tidying, house upkeep" },
 ]
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {

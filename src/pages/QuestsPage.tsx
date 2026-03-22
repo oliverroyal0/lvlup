@@ -5,28 +5,20 @@ import { AnimatePresence } from "framer-motion"
 import { XPBar } from "../components/XPBar"
 import { xpForNextLevel } from "../xpEngine"
 
-const CATEGORIES = ["STRENGTH", "MIND", "WEALTH", "EXPLORER", "FOCUS", "HEALTH"]
+const CATEGORIES = ["STRENGTH", "MIND", "WEALTH", "EXPLORER", "FOCUS", "HEALTH", "HOME"]
+const CATEGORY_ICONS: Record<string, string> = {
+  STRENGTH: "💪", MIND: "🧠", WEALTH: "💰",
+  EXPLORER: "🌍", FOCUS: "🎯", HEALTH: "❤️", HOME: "🏠"
+}
 
 const freqLabels = {
   daily: "Daily",
   weekly: "Weekly",
-  "bi-weekly": "Bi-Weekly",
-  monthly: "Monthly",
-  "semi-annually": "Semi-Annual",
-  "bi-annually": "Bi-Annual",
-  annually: "Annually",
-  oneTime: "One-Time",
 }
 
 const freqXP = {
   daily: 25,
   weekly: 100,
-  "bi-weekly": 75,
-  monthly: 150,
-  "semi-annually": 300,
-  "bi-annually": 200,
-  annually: 500,
-  oneTime: 50,
 }
 
 export default function QuestsPage({ user, onQuestComplete, streak, longestStreak }: {
@@ -42,7 +34,7 @@ export default function QuestsPage({ user, onQuestComplete, streak, longestStrea
 
   async function loadQuests() {
     const all = await db.quests
-      .filter(q => q.frequency === "daily" || !q.isCompleted)
+      .filter(q => q.frequency === "daily" || q.frequency === "weekly")
       .toArray()
     setQuests(all)
   }
@@ -83,6 +75,7 @@ export default function QuestsPage({ user, onQuestComplete, streak, longestStrea
             { icon: "🌍", name: "Explorer", val: 0, color: "text-green" },
             { icon: "🎯", name: "Focus", val: 0, color: "text-red" },
             { icon: "❤️", name: "Health", val: 0, color: "text-orange" },
+
           ].map((stat) => (
             <div key={stat.name} className="flex-shrink-0 bg-surface2 border border-border rounded-lg px-2.5 py-2 flex items-center gap-2">
               <span className="text-sm">{stat.icon}</span>
@@ -210,7 +203,7 @@ function AddQuestSheet({ onClose, onSave }: { onClose: () => void; onSave: () =>
                     : "border-border text-muted"
                   }`}
               >
-                {cat}
+                {CATEGORY_ICONS[cat]} {cat}
               </button>
             ))}
           </div>
@@ -225,8 +218,8 @@ function AddQuestSheet({ onClose, onSave }: { onClose: () => void; onSave: () =>
                 key={freq}
                 onClick={() => { setFrequency(freq); setXp(freqXP[freq]) }}
                 className={`font-mono text-[10px] py-2 rounded-lg border transition-all tracking-wide ${frequency === freq
-                    ? "border-purple bg-purple/10 text-purple"
-                    : "border-border text-muted"
+                  ? "border-purple bg-purple/10 text-purple"
+                  : "border-border text-muted"
                   }`}
               >
                 {freqLabels[freq]}
