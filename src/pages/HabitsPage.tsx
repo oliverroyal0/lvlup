@@ -75,7 +75,7 @@ export default function HabitsPage({ onUserUpdate, onLevelUp }: {
     const previousUser = await db.users.toCollection().first()
     const previousRank = previousUser?.rank
     const result = await awardXP(habit.xpReward)
-    await incrementStat(habit.category)
+    await incrementStat(habit.category, 0.25)
     await updateStreak()
     const updatedUser = await db.users.toCollection().first()
     const newRank = updatedUser?.rank
