@@ -16,35 +16,47 @@ const PLAY_TABS = [
 
 const AI_CONTEXTS: Record<string, { systemPrompt: string; suggestions: string[] }> = {
   quests: {
-    systemPrompt: "You are helping the user plan their daily and weekly quests. Suggest specific, achievable quests based on their stats and goals. Focus on actionable tasks they can complete today or this week.",
+    systemPrompt: "Focus on helping the user plan powerful daily and weekly quests. Connect quests to their weakest stats. Help them build momentum with quick wins.",
     suggestions: [
-      "What quests should I focus on today?",
-      "Create 3 quests to boost my weakest stat",
-      "Give me a challenging weekly quest",
+      "What should I focus on today based on my stats?",
+      "My weakest stat is dragging me down — fix it",
+      "Build me a full week of quests across all categories",
+      "I want to level up fast — what's the most XP efficient strategy?",
+      "Create quests that connect my fitness and mental growth",
+      "I only have 30 minutes a day — what quests fit?",
     ],
   },
   missions: {
-    systemPrompt: "You are helping the user define and break down big life goals into missions. Help them think big and create ambitious but realistic missions with clear steps.",
+    systemPrompt: "Help the user define bold life goals and break them into missions with clear steps. Think big, plan smart. Connect missions to their overall character arc.",
     suggestions: [
-      "Help me create a main quest for this month",
-      "Break down my biggest goal into mission steps",
-      "What mission should I focus on next?",
+      "Help me define my main quest for this year",
+      "I have a big goal but don't know where to start",
+      "Break down my career goal into missions and steps",
+      "What seasonal mission should I be running right now?",
+      "Create a side quest for something fun I want to do",
+      "Review my active missions and tell me what to prioritize",
     ],
   },
   habits: {
-    systemPrompt: "You are helping the user build a powerful daily routine through habits. Suggest habits based on their current stats and what they want to improve. Focus on consistency over intensity.",
+    systemPrompt: "Help the user build a powerful daily routine. Focus on habit stacking, consistency over intensity, and connecting habits to stat growth. Make it sustainable.",
     suggestions: [
-      "What habits should I build first?",
-      "Create a morning routine for me",
-      "Which of my stats needs the most habit support?",
+      "Build me a complete morning routine",
+      "What habits will boost my weakest stats the fastest?",
+      "I keep failing at habits — what am I doing wrong?",
+      "Create a night routine that sets me up for tomorrow",
+      "Stack habits that cover multiple stat categories at once",
+      "I want to build a home routine — what should it include?",
     ],
   },
   journal: {
-    systemPrompt: "You are helping the user reflect on their life and progress. Generate thoughtful journal prompts, analyze their mood patterns, and help them extract insights from their journey.",
+    systemPrompt: "Help the user reflect deeply and extract insights from their journey. Generate powerful prompts, spot mood patterns, and help them understand their own growth.",
     suggestions: [
-      "Give me a journal prompt for today",
-      "What patterns do you see in my progress?",
-      "Help me reflect on this week",
+      "Give me a powerful journal prompt for today",
+      "What patterns do you see in my progress so far?",
+      "I've been feeling off lately — help me process it",
+      "Help me do a weekly review and plan next week",
+      "What should I be grateful for based on my progress?",
+      "Help me write about a goal I'm scared to pursue",
     ],
   },
 }
