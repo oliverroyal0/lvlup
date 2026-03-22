@@ -3,6 +3,11 @@ import { AnimatePresence, motion } from "framer-motion"
 import { db } from "../db"
 import { supabase } from "../supabase"
 
+
+const today = new Date().toDateString()
+const storageKey = "lvlup-ai-calls"
+
+
 export interface AIContext {
     screen: string
     systemPrompt: string
@@ -21,6 +26,24 @@ interface Message {
     actions?: AIAction[]
 }
 
+
+function getUsedCalls(): number {
+    try {
+        const stored = localStorage.getItem(storageKey)
+        if (!stored) return 0
+        const { date, count } = JSON.parse(stored)
+        if (date !== today) return 0 // reset daily
+        return count
+    } catch {
+        return 0
+    }
+}
+
+function incrementUsedCalls() {
+    const current = getUsedCalls()
+    localStorage.setItem(storageKey, JSON.stringify({ date: today, count: current + 1 }))
+}
+
 export function AIPanel({ context, onClose }: {
     context: AIContext
     onClose: () => void
@@ -28,7 +51,7 @@ export function AIPanel({ context, onClose }: {
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
     const [loading, setLoading] = useState(false)
-    const [usedCalls, setUsedCalls] = useState(0)
+    const [usedCalls, setUsedCalls] = useState(getUsedCalls)
     const MAX_FREE_CALLS = 5
 
     async function buildUserContext(): Promise<string> {
@@ -62,7 +85,8 @@ PLAYER CONTEXT:
         setMessages(prev => [...prev, userMessage])
         setInput("")
         setLoading(true)
-        setUsedCalls(prev => prev + 1)
+        incrementUsedCalls()
+        setUsedCalls(getUsedCalls())
 
         try {
             const userContext = await buildUserContext()
@@ -74,14 +98,26 @@ ${context.systemPrompt}
 ${userContext}
 
 RESPONSE RULES:
-- Keep responses concise and motivating — max 3 sentences of advice
-- Always end with 1-3 actionable JSON blocks if relevant
-- JSON action format: {"action":"addQuest","title":"...","category":"STRENGTH|MIND|WEALTH|EXPLORER|FOCUS|HEALTH|HOME","xpReward":25,"frequency":"daily|weekly"}
-- For habits: {"action":"addHabit","title":"...","category":"...","xpReward":20,"frequency":"daily|weekly|bi-weekly|monthly"}
-- For missions: {"action":"addMission","title":"...","category":"...","xpReward":500,"missionType":"main|seasonal|yearly|sideQuest"}
-- Wrap JSON in triple backticks with json tag
+- Keep responses concise and motivating — max 2 sentences of advice
+- You MUST include JSON action blocks whenever you suggest creating anything
+- NEVER say "I'll create..." or "Let me add..." without including the actual JSON block
+- ALWAYS output JSON blocks for any quest, habit, or mission you mention
+- JSON action format (copy exactly):
+\`\`\`json
+{"action":"addQuest","title":"...","category":"STRENGTH|MIND|WEALTH|EXPLORER|FOCUS|HEALTH|HOME","xpReward":25,"frequency":"daily|weekly"}
+\`\`\`
+- For habits:
+\`\`\`json
+{"action":"addHabit","title":"...","category":"...","xpReward":20,"frequency":"daily|weekly|bi-weekly|monthly"}
+\`\`\`
+- For missions:
+\`\`\`json
+{"action":"addMission","title":"...","category":"...","xpReward":500,"missionType":"main|seasonal|yearly|sideQuest"}
+\`\`\`
+- Include 1-3 JSON blocks per response when relevant
 - Speak directly to the user, use their name, reference their actual stats
-- Tone: like a hype coach meets anime mentor — encouraging, direct, fired up`
+- Tone: like a hype coach meets anime mentor — encouraging, direct, fired up
+- If the user asks a general question with no action needed, answer briefly with no JSON`
 
             const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
@@ -195,118 +231,118 @@ RESPONSE RULES:
 
     return (
         <AnimatePresence>
-        <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="border-b border-border bg-surface overflow-hidden"
-        >
-            <div className="p-4 space-y-3 max-h-96 flex flex-col">
+            <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="border-b border-border bg-surface overflow-hidden"
+            >
+                <div className="p-4 space-y-3 max-h-96 flex flex-col">
 
-                {/* Header */}
-                <div className="flex items-center justify-between flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                        <span className="text-lg">✨</span>
-                        <span className="font-rajdhani font-bold text-sm text-purple tracking-widest uppercase">
-                            AI Coach
-                        </span>
-                        <span className="font-mono text-[9px] text-muted">
-                            {MAX_FREE_CALLS - usedCalls} calls left
-                        </span>
-                    </div>
-                    <button onClick={onClose} className="text-muted hover:text-red transition-colors text-sm">✕</button>
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
-
-                    {/* Suggestions if no messages yet */}
-                    {messages.length === 0 && (
-                        <div className="space-y-2">
-                            <div className="font-mono text-[9px] text-muted tracking-widest uppercase mb-2">
-                                Suggested prompts
-                            </div>
-                            {context.suggestions.map((suggestion, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => sendMessage(suggestion)}
-                                    className="w-full text-left px-3 py-2 bg-surface2 border border-border rounded-lg font-mono text-[10px] text-muted hover:border-purple/40 hover:text-purple transition-all"
-                                >
-                                    {suggestion}
-                                </button>
-                            ))}
+                    {/* Header */}
+                    <div className="flex items-center justify-between flex-shrink-0">
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg">✨</span>
+                            <span className="font-rajdhani font-bold text-sm text-purple tracking-widest uppercase">
+                                AI Coach
+                            </span>
+                            <span className="font-mono text-[9px] text-muted">
+                                {MAX_FREE_CALLS - usedCalls} calls left
+                            </span>
                         </div>
-                    )}
+                        <button onClick={onClose} className="text-muted hover:text-red transition-colors text-sm">✕</button>
+                    </div>
 
-                    {/* Message thread */}
-                    {messages.map((msg, i) => (
-                        <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                            <div className={`max-w-[85%] space-y-2`}>
-                                <div className={`px-3 py-2.5 rounded-xl text-sm leading-relaxed ${msg.role === "user"
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
+
+                        {/* Suggestions if no messages yet */}
+                        {messages.length === 0 && (
+                            <div className="space-y-2">
+                                <div className="font-mono text-[9px] text-muted tracking-widest uppercase mb-2">
+                                    Suggested prompts
+                                </div>
+                                {context.suggestions.map((suggestion, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => sendMessage(suggestion)}
+                                        className="w-full text-left px-3 py-2 bg-surface2 border border-border rounded-lg font-mono text-[10px] text-muted hover:border-purple/40 hover:text-purple transition-all"
+                                    >
+                                        {suggestion}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Message thread */}
+                        {messages.map((msg, i) => (
+                            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                                <div className={`max-w-[85%] space-y-2`}>
+                                    <div className={`px-3 py-2.5 rounded-xl text-sm leading-relaxed ${msg.role === "user"
                                         ? "bg-purple/20 border border-purple/30 text-white ml-auto"
                                         : "bg-surface2 border border-border text-muted"
-                                    }`}>
-                                    {msg.content}
-                                </div>
+                                        }`}>
+                                        {msg.content}
+                                    </div>
 
-                                {/* Action buttons */}
-                                {msg.actions && msg.actions.length > 0 && (
-                                    <div className="space-y-1.5">
-                                        {msg.actions.map((action, j) => (
-                                            <ActionButton
-                                                key={j}
-                                                action={action}
-                                                label={actionLabels[action.type] ?? "Add"}
-                                                colorClass={actionColors[action.type] ?? "border-border text-muted"}
-                                                onExecute={executeAction}
+                                    {/* Action buttons */}
+                                    {msg.actions && msg.actions.length > 0 && (
+                                        <div className="space-y-1.5">
+                                            {msg.actions.map((action, j) => (
+                                                <ActionButton
+                                                    key={j}
+                                                    action={action}
+                                                    label={actionLabels[action.type] ?? "Add"}
+                                                    colorClass={actionColors[action.type] ?? "border-border text-muted"}
+                                                    onExecute={executeAction}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Loading */}
+                        {loading && (
+                            <div className="flex justify-start">
+                                <div className="px-3 py-2.5 bg-surface2 border border-border rounded-xl">
+                                    <div className="flex gap-1">
+                                        {[0, 1, 2].map(i => (
+                                            <motion.div
+                                                key={i}
+                                                className="w-1.5 h-1.5 bg-purple rounded-full"
+                                                animate={{ opacity: [0.3, 1, 0.3] }}
+                                                transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
                                             />
                                         ))}
                                     </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-
-                    {/* Loading */}
-                    {loading && (
-                        <div className="flex justify-start">
-                            <div className="px-3 py-2.5 bg-surface2 border border-border rounded-xl">
-                                <div className="flex gap-1">
-                                    {[0, 1, 2].map(i => (
-                                        <motion.div
-                                            key={i}
-                                            className="w-1.5 h-1.5 bg-purple rounded-full"
-                                            animate={{ opacity: [0.3, 1, 0.3] }}
-                                            transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                                        />
-                                    ))}
                                 </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
 
-                {/* Input */}
-                <div className="flex gap-2 flex-shrink-0">
-                    <input
-                        value={input}
-                        onChange={e => setInput(e.target.value)}
-                        onKeyDown={e => e.key === "Enter" && sendMessage(input)}
-                        placeholder={usedCalls >= MAX_FREE_CALLS ? "Daily limit reached" : "Ask your AI coach..."}
-                        disabled={usedCalls >= MAX_FREE_CALLS || loading}
-                        className="flex-1 bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-purple transition-colors placeholder:text-muted disabled:opacity-40"
-                    />
-                    <button
-                        onClick={() => sendMessage(input)}
-                        disabled={!input.trim() || loading || usedCalls >= MAX_FREE_CALLS}
-                        className="px-3 py-2 bg-purple/20 border border-purple/40 rounded-lg font-mono text-[10px] text-purple hover:bg-purple/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                        SEND
-                    </button>
+                    {/* Input */}
+                    <div className="flex gap-2 flex-shrink-0">
+                        <input
+                            value={input}
+                            onChange={e => setInput(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && sendMessage(input)}
+                            placeholder={usedCalls >= MAX_FREE_CALLS ? "Daily limit reached" : "Ask your AI coach..."}
+                            disabled={usedCalls >= MAX_FREE_CALLS || loading}
+                            className="flex-1 bg-surface2 border border-border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-purple transition-colors placeholder:text-muted disabled:opacity-40"
+                        />
+                        <button
+                            onClick={() => sendMessage(input)}
+                            disabled={!input.trim() || loading || usedCalls >= MAX_FREE_CALLS}
+                            className="px-3 py-2 bg-purple/20 border border-purple/40 rounded-lg font-mono text-[10px] text-purple hover:bg-purple/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            SEND
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </motion.div>
+            </motion.div>
         </AnimatePresence>
     )
 }
@@ -330,8 +366,8 @@ function ActionButton({ action, label, colorClass, onExecute }: {
             onClick={handleClick}
             disabled={done}
             className={`w-full text-left px-3 py-2 rounded-lg border font-mono text-[10px] tracking-wide transition-all ${done
-                    ? "border-green/30 bg-green/10 text-green cursor-default"
-                    : colorClass
+                ? "border-green/30 bg-green/10 text-green cursor-default"
+                : colorClass
                 }`}
         >
             {done ? "✓ Added!" : `${label}: "${action.payload.title}"`}
