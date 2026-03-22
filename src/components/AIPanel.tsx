@@ -24,6 +24,7 @@ interface Message {
     role: "user" | "assistant"
     content: string
     actions?: AIAction[]
+    followUps?: string[]
 }
 
 
@@ -53,7 +54,7 @@ export function AIPanel({ context, onClose }: {
     const [loading, setLoading] = useState(false)
     const [usedCalls, setUsedCalls] = useState(getUsedCalls)
     const MAX_FREE_CALLS = 10
-    
+
 
     async function buildUserContext(): Promise<string> {
         const user = await db.users.toCollection().first()
@@ -117,17 +118,21 @@ CONVERSATION RULES:
 - If the user seems stuck, offer 2-3 specific directions they can go
 - Remember what was said earlier in this conversation and reference it
 - If they ask about one area of life, proactively connect it to others
-  (e.g. fitness habits → better sleep → better focus → stronger Mind stat)
+  (e.g. fitness habits → better sleep → better focus → stronger Mind stat) 
+  
+FOLLOW-UP FORMAT:
+After every response, always end with a line that starts with "FOLLOWUPS:" followed by 3 short follow-up options separated by "|" that the user can tap to continue the conversation. Make them specific to what was just discussed.
+Example: FOLLOWUPS: Build me a full week plan|What about my weakest stat?|Connect these to a mission 
 
 ACTION RULES:
-- ALWAYS output JSON blocks when suggesting quests, habits, or missions
-- NEVER say "I'll create..." without the actual JSON block
-- Output 2-4 JSON blocks per response when relevant
-- Each JSON block becomes a tap-to-add button in the app
+            - ALWAYS output JSON blocks when suggesting quests, habits, or missions
+                - NEVER say "I'll create..." without the actual JSON block
+                    - Output 2 - 4 JSON blocks per response when relevant
+                        - Each JSON block becomes a tap - to - add button in the app
 
-JSON FORMATS (use exactly):
+JSON FORMATS(use exactly):
 For a quest:
-\`\`\`json
+            \`\`\`json
 {"action":"addQuest","title":"...","category":"STRENGTH|MIND|WEALTH|EXPLORER|FOCUS|HEALTH|HOME","xpReward":25,"frequency":"daily|weekly"}
 \`\`\`
 
@@ -193,8 +198,26 @@ CROSS-AREA CONNECTIONS:
                 } catch { }
             }
 
-            // Clean the response text — remove JSON blocks
-            const cleanContent = rawContent.replace(/```json\n[\s\S]*?\n```/g, "").trim()
+            // Extract follow-ups
+            const followUps: string[] = []
+            const followUpMatch = rawContent.match(/FOLLOWUPS:\s*(.+)$/m)
+            if (followUpMatch) {
+                const options = followUpMatch[1].split("|").map((s: string) => s.trim()).filter(Boolean)
+                followUps.push(...options.slice(0, 3))
+            }
+
+            // Clean content — remove JSON blocks and FOLLOWUPS line
+            const cleanContent = rawContent
+                .replace(/```json\r?\n[\s\S]*?\r?\n?```/g, "")
+                .replace(/FOLLOWUPS:.*$/m, "")
+                .trim()
+
+            setMessages(prev => [...prev, {
+                role: "assistant",
+                content: cleanContent,
+                actions,
+                followUps,
+            }])
 
             const assistantMessage: Message = {
                 role: "assistant",
@@ -308,29 +331,51 @@ CROSS-AREA CONNECTIONS:
 
                         {/* Message thread */}
                         {messages.map((msg, i) => (
-                            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                                <div className={`max-w-[85%] space-y-2`}>
-                                    <div className={`px-3 py-2.5 rounded-xl text-sm leading-relaxed ${msg.role === "user"
-                                        ? "bg-purple/20 border border-purple/30 text-white ml-auto"
-                                        : "bg-surface2 border border-border text-muted"
-                                        }`}>
-                                        {msg.content}
-                                    </div>
+                            <div key={i} className={`flex flex-col gap-1.5 ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                                <div className={`max-w-[88%] px-3 py-2 rounded-xl text-sm leading-relaxed ${msg.role === "user"
+                                        ? "bg-purple/20 border border-purple/30 text-white rounded-br-sm"
+                                        : "bg-surface2 border border-border text-muted rounded-bl-sm"
+                                    }`}>
+                                    {msg.content}
+                                </div>
 
-                                    {/* Action buttons */}
-                                    {msg.actions && msg.actions.length > 0 && (
-                                        <div className="space-y-1.5">
-                                            {msg.actions.map((action, j) => (
-                                                <ActionButton
+                                {/* Action buttons */}
+                                {msg.actions && msg.actions.length > 0 && (
+                                    <div className="w-full space-y-1">
+                                        {msg.actions.map((action, j) => (
+                                            <ActionButton
+                                                key={j}
+                                                action={action}
+                                                colorClass={actionColors[action.type] ?? "border-border text-muted"}
+                                                onExecute={executeAction}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Follow-up suggestion chips */}
+                                {msg.followUps && msg.followUps.length > 0 && i === messages.length - 1 && (
+                                    <div className="w-full space-y-1.5 mt-1">
+                                        <div className="font-mono text-[9px] text-muted tracking-widest uppercase">
+                                            Continue with...
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            {msg.followUps.map((followUp, j) => (
+                                                <motion.button
                                                     key={j}
-                                                    action={action}
-                                                    colorClass={actionColors[action.type] ?? "border-border text-muted"}
-                                                    onExecute={executeAction}
-                                                />
+                                                    initial={{ opacity: 0, x: -8 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: j * 0.08 }}
+                                                    onClick={() => sendMessage(followUp)}
+                                                    className="w-full text-left px-3 py-2.5 bg-surface border border-border rounded-xl font-mono text-[10px] text-muted hover:border-purple/40 hover:text-purple hover:bg-purple/5 transition-all flex items-center gap-2"
+                                                >
+                                                    <span className="text-purple opacity-60">→</span>
+                                                    {followUp}
+                                                </motion.button>
                                             ))}
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
 
