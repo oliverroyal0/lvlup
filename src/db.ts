@@ -99,6 +99,109 @@ export interface TravelPin {
   createdAt: Date
 }
 
+export interface FitnessProfile {
+  id?: number
+  heightCm?: number
+  heightFt?: number
+  heightIn?: number
+  weightKg?: number
+  weightLbs?: number
+  age?: number
+  gender?: string
+  fitnessGoal: "lose_weight" | "build_muscle" | "get_stronger" | "improve_endurance" | "learn_skills" | "general_fitness"
+  units: "metric" | "imperial"
+  equipment: string[]
+  beforePhotoUrl?: string
+  createdAt: Date
+}
+
+export interface BodyMetric {
+  id?: number
+  date: string
+  weightKg?: number
+  weightLbs?: number
+  bodyFatPct?: number
+  chestCm?: number
+  waistCm?: number
+  hipsCm?: number
+  armCm?: number
+  thighCm?: number
+  chestIn?: number
+  waistIn?: number
+  hipsIn?: number
+  armIn?: number
+  thighIn?: number
+  notes?: string
+  photoUrl?: string
+  createdAt: Date
+}
+
+export interface Exercise {
+  id?: number
+  name: string
+  category: "strength" | "calisthenics" | "martial_arts" | "cardio" | "hiit" | "mobility" | "flexibility" | "skill"
+  equipment: string[]
+  musclesPrimary: string[]
+  musclesSecondary: string[]
+  description: string
+  instructions: string[]
+  difficulty: "beginner" | "intermediate" | "advanced" | "elite"
+  isCustom: boolean
+  imageUrl?: string
+  createdAt?: Date
+}
+
+export interface WorkoutLog {
+  id?: number
+  date: string
+  name?: string
+  duration?: number
+  notes?: string
+  totalVolume?: number
+  totalSets?: number
+  xpEarned?: number
+  createdAt: Date
+}
+
+export interface WorkoutSet {
+  id?: number
+  workoutLogId: number
+  exerciseId: number
+  exerciseName: string
+  setNumber: number
+  reps?: number
+  weightKg?: number
+  weightLbs?: number
+  duration?: number
+  distance?: number
+  isPersonalRecord?: boolean
+  notes?: string
+}
+
+export interface PersonalRecord {
+  id?: number
+  exerciseId: number
+  exerciseName: string
+  weightKg?: number
+  weightLbs?: number
+  reps?: number
+  duration?: number
+  distance?: number
+  achievedDate: string
+  workoutLogId?: number
+}
+
+export interface SkillProgress {
+  id?: number
+  exerciseId: number
+  exerciseName: string
+  currentLevel: number
+  maxLevel: number
+  notes?: string
+  achievedDate?: string
+  createdAt: Date
+}
+
 export class LVLUpDatabase extends Dexie {
   quests!: Table<Quest>
   users!: Table<User>
@@ -109,11 +212,18 @@ export class LVLUpDatabase extends Dexie {
   missionSteps!: Table<MissionStep>
   habits!: Table<Habit>
   travelPins!: Table<TravelPin>
+  fitnessProfile!: Table<FitnessProfile>
+  bodyMetrics!: Table<BodyMetric>
+  exercises!: Table<Exercise>
+  workoutLogs!: Table<WorkoutLog>
+  workoutSets!: Table<WorkoutSet>
+  personalRecords!: Table<PersonalRecord>
+  skillProgress!: Table<SkillProgress>
 
 
   constructor() {
     super("lvlup-db")
-    this.version(9).stores({
+    this.version(10).stores({
       quests: "++id, category, frequency, isCompleted, createdAt",
       users: "++id, username",
       missions: "++id, missionType, category, isCompleted, createdAt",
@@ -123,6 +233,13 @@ export class LVLUpDatabase extends Dexie {
       missionSteps: "++id, missionId, isCompleted, createdAt",
       habits: "++id, category, timeOfDay, lastCompletedDate, createdAt",
       travelPins: "++id, country, visitedDate, createdAt",
+      fitnessProfile: "++id",
+      bodyMetrics: "++id, date, createdAt",
+      exercises: "++id, category, difficulty, isCustom",
+      workoutLogs: "++id, date, createdAt",
+      workoutSets: "++id, workoutLogId, exerciseId",
+      personalRecords: "++id, exerciseId, achievedDate",
+      skillProgress: "++id, exerciseId",
     })
   }
 }

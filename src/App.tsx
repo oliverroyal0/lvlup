@@ -220,6 +220,7 @@ export default function App() {
               onSubTabChange={setLifeSubTab}
               aiOpen={aiOpen}
               onAIClose={() => setAiOpen(false)}
+              onUserUpdate={loadUser}
             />
           )}
           {activeTab === "guild" && (

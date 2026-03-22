@@ -2,7 +2,7 @@ import { SubNav } from "./SubNav"
 import { PageTransition } from "./PageTransition"
 import { AIPanel } from "./AIPanel"
 import TravelPage from "../pages/TravelPage"
-
+import FitnessPage from "../pages/FitnessPage"
 
 
 const LIFE_TABS = [
@@ -82,11 +82,12 @@ function ComingSoon({ title, icon }: { title: string; icon: string }) {
   )
 }
 
-export function LifeHub({ activeSubTab, onSubTabChange, aiOpen, onAIClose }: {
+export function LifeHub({ activeSubTab, onSubTabChange, aiOpen, onAIClose, onUserUpdate }: {
   activeSubTab: string
   onSubTabChange: (tab: string) => void
   aiOpen: boolean
   onAIClose: () => void
+  onUserUpdate: () => void
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -115,7 +116,9 @@ export function LifeHub({ activeSubTab, onSubTabChange, aiOpen, onAIClose }: {
           {activeSubTab === "travel" && (
             <TravelPage onUserUpdate={() => { }} />
           )}
-          {activeSubTab === "fitness" && <ComingSoon title="Fitness" icon="💪" />}
+          {activeSubTab === "fitness" && (
+            <FitnessPage onUserUpdate={onUserUpdate} />
+          )}
           {activeSubTab === "finance" && <ComingSoon title="Finance" icon="💰" />}
           {activeSubTab === "education" && <ComingSoon title="Education" icon="🎓" />}
           {activeSubTab === "books" && <ComingSoon title="Books" icon="📚" />}
