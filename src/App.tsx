@@ -208,12 +208,6 @@ export default function App() {
             />
           )}
 
-          {activeTab === "stats" && user && (
-            <div className="flex-1 overflow-y-auto px-5 pt-5 pb-24">
-              <StatsPage user={user} />
-            </div>
-          )}
-
           {activeTab === "life" && (
             <LifeHub
               activeSubTab={lifeSubTab}
@@ -230,6 +224,13 @@ export default function App() {
               <span className="font-mono text-xs text-muted">Coming in v2.5</span>
             </div>
           )}
+
+          {activeTab === "stats" && user && (
+            <div className="flex-1 overflow-y-auto px-5 pt-5 pb-24">
+              <StatsPage user={user} />
+            </div>
+          )}
+          
           {activeTab === "profile" && user && (
             <div className="flex-1 overflow-y-auto px-5 pt-5 pb-24">
               <ProfilePage user={user} onUserUpdate={loadUser} />

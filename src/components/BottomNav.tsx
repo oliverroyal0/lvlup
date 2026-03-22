@@ -1,11 +1,11 @@
 import { motion } from "framer-motion"
 
 const tabs = [
-  { id: "play",    icon: "⚔️",  label: "Play"    },
-  { id: "stats",   icon: "📊",  label: "Stats"   },
-  { id: "life",    icon: "🌍",  label: "Life"    },
-  { id: "guild",   icon: "👥",  label: "Guild"   },
-  { id: "profile", icon: "👤",  label: "Profile" },
+  { id: "play", icon: "⚔️", label: "Play" },
+  { id: "life", icon: "🌍", label: "Life" },
+  { id: "guild", icon: "👥", label: "Guild" },
+  { id: "stats", icon: "📊", label: "Stats" },
+  { id: "profile", icon: "👤", label: "Profile" },
 ]
 
 export function BottomNav({ activeTab, onTabChange }: {
