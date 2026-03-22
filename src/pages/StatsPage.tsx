@@ -17,7 +17,7 @@ const STAT_CONFIG = {
   EXPLORER: { icon: "🌍", color: "#40e890", label: "Explorer" },
   FOCUS:    { icon: "🎯", color: "#e84040", label: "Focus" },
   HEALTH:   { icon: "❤️", color: "#f08040", label: "Health" },
-    HOME:   { icon: "🏠", color: "#e1d49e", label: "Home" },
+  HOME:     { icon: "🏠", color: "#a8a095", label: "Home" },
 }
 
 type StatKey = keyof typeof STAT_CONFIG

@@ -75,6 +75,7 @@ export interface Habit {
   id?: number
   title: string
   category: string
+  frequency: "daily" | "weekly" | "bi-weekly" | "monthly"
   xpReward: number
   currentStreak: number
   longestStreak: number

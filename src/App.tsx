@@ -34,6 +34,7 @@ export default function App() {
   const [longestStreak, setLongestStreak] = useState(0)
   const [showStreakPopup, setShowStreakPopup] = useState(false)
   const [streakData, setStreakData] = useState<Streak | null>(null)
+  const [aiOpen, setAiOpen] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -156,6 +157,18 @@ export default function App() {
         </div>
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs text-gold">🔥 {streak}</span>
+
+          {/* AI button */}
+          <button
+            onClick={() => setAiOpen(!aiOpen)}
+            className={`w-8 h-8 border rounded-md flex items-center justify-center text-sm transition-all ${aiOpen
+              ? "border-purple/40 bg-purple/10"
+              : "border-border hover:border-purple/40 hover:bg-purple/10"
+              }`}
+          >
+            ✨
+          </button>
+
           <div
             onClick={() => requestNotificationPermission().then(granted => {
               if (granted) scheduleDailyReminder()
@@ -169,7 +182,7 @@ export default function App() {
             onClick={() => supabase.auth.signOut()}
             className="font-mono text-[9px] text-muted hover:text-red transition-colors tracking-widest border border-border rounded-md px-2 py-1.5"
           >
-            EXIT
+            LOGOUT
           </button>
         </div>
       </div>
@@ -190,17 +203,23 @@ export default function App() {
                 setIsRankUp(rankUp)
                 setLevelUpMsg(msg)
               }}
+              aiOpen={aiOpen}
+              onAIClose={() => setAiOpen(false)}
             />
           )}
+
           {activeTab === "stats" && user && (
             <div className="flex-1 overflow-y-auto px-5 pt-5 pb-24">
               <StatsPage user={user} />
             </div>
           )}
+
           {activeTab === "life" && (
             <LifeHub
               activeSubTab={lifeSubTab}
               onSubTabChange={setLifeSubTab}
+              aiOpen={aiOpen}
+              onAIClose={() => setAiOpen(false)}
             />
           )}
           {activeTab === "guild" && (
