@@ -86,6 +86,19 @@ export interface Habit {
   isArchived?: boolean
 }
 
+export interface TravelPin {
+  id?: number
+  name: string
+  country: string
+  latitude: number
+  longitude: number
+  notes?: string
+  mood?: string
+  visitedDate: string
+  photos?: string[]
+  createdAt: Date
+}
+
 export class LVLUpDatabase extends Dexie {
   quests!: Table<Quest>
   users!: Table<User>
@@ -95,11 +108,12 @@ export class LVLUpDatabase extends Dexie {
   streaks!: Table<Streak>
   missionSteps!: Table<MissionStep>
   habits!: Table<Habit>
+  travelPins!: Table<TravelPin>
 
 
   constructor() {
     super("lvlup-db")
-    this.version(8).stores({
+    this.version(9).stores({
       quests: "++id, category, frequency, isCompleted, createdAt",
       users: "++id, username",
       missions: "++id, missionType, category, isCompleted, createdAt",
@@ -108,6 +122,7 @@ export class LVLUpDatabase extends Dexie {
       streaks: "++id, lastActiveDate",
       missionSteps: "++id, missionId, isCompleted, createdAt",
       habits: "++id, category, timeOfDay, lastCompletedDate, createdAt",
+      travelPins: "++id, country, visitedDate, createdAt",
     })
   }
 }

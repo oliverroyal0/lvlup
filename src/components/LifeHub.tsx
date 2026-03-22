@@ -1,6 +1,7 @@
 import { SubNav } from "./SubNav"
 import { PageTransition } from "./PageTransition"
 import { AIPanel } from "./AIPanel"
+import TravelPage from "../pages/TravelPage"
 
 
 
@@ -111,7 +112,9 @@ export function LifeHub({ activeSubTab, onSubTabChange, aiOpen, onAIClose }: {
 
       <div className="flex-1 overflow-y-auto px-5 pt-5 pb-24">
         <PageTransition tabKey={activeSubTab}>
-          {activeSubTab === "travel" && <ComingSoon title="Travel" icon="🗺️" />}
+          {activeSubTab === "travel" && (
+            <TravelPage onUserUpdate={() => { }} />
+          )}
           {activeSubTab === "fitness" && <ComingSoon title="Fitness" icon="💪" />}
           {activeSubTab === "finance" && <ComingSoon title="Finance" icon="💰" />}
           {activeSubTab === "education" && <ComingSoon title="Education" icon="🎓" />}
