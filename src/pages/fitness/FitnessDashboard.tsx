@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
 import { db, type FitnessProfile, type WorkoutLog, type PersonalRecord, type BodyMetric } from "../../db"
 import { awardXP, incrementStat } from "../../xpEngine"
 import WorkoutLogger from "./WorkoutLogger"
@@ -17,7 +16,7 @@ const DASH_TABS = [
     { id: "history", icon: "📋", label: "History" },
 ]
 
-export default function FitnessDashboard({ profile, onUserUpdate, onProfileUpdate }: {
+export default function FitnessDashboard({ profile, onUserUpdate }: {
     profile: FitnessProfile
     onUserUpdate: () => void
     onProfileUpdate: () => void
@@ -54,8 +53,8 @@ export default function FitnessDashboard({ profile, onUserUpdate, onProfileUpdat
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-[10px] tracking-widest border transition-all ${activeTab === tab.id
-                                ? "border-gold bg-gold/10 text-gold"
-                                : "border-border text-muted"
+                            ? "border-gold bg-gold/10 text-gold"
+                            : "border-border text-muted"
                             }`}
                     >
                         <span>{tab.icon}</span>
@@ -198,7 +197,7 @@ export default function FitnessDashboard({ profile, onUserUpdate, onProfileUpdat
             )}
 
             {activeTab === "exercises" && (
-                <ExerciseDatabase profile={profile} />
+                <ExerciseDatabase />
             )}
 
             {activeTab === "history" && (

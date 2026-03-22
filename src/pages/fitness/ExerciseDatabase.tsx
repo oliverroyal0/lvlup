@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { db, type Exercise, type FitnessProfile } from "../../db"
 
 const CATEGORY_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
   strength:     { icon: "💪", color: "text-cyan",   label: "Strength"     },
@@ -20,11 +19,10 @@ const DIFFICULTY_CONFIG = {
   elite:        { color: "text-red    border-red/30    bg-red/10",    label: "Elite"        },
 }
 
-export default function ExerciseDatabase({ profile }: { profile: FitnessProfile }) {
+export default function ExerciseDatabase() {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [search, setSearch] = useState("")
   const [filterCategory, setFilterCategory] = useState("all")
-  const [filterEquipment, setFilterEquipment] = useState("all")
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [showAddCustom, setShowAddCustom] = useState(false)
 
@@ -39,12 +37,10 @@ export default function ExerciseDatabase({ profile }: { profile: FitnessProfile 
     const matchSearch = e.name.toLowerCase().includes(search.toLowerCase()) ||
       e.musclesPrimary.some(m => m.toLowerCase().includes(search.toLowerCase()))
     const matchCat = filterCategory === "all" || e.category === filterCategory
-    const matchEquip = filterEquipment === "all" || e.equipment.includes(filterEquipment)
-    return matchSearch && matchCat && matchEquip
+    return matchSearch && matchCat
   })
 
   const categories = ["all", ...Object.keys(CATEGORY_CONFIG)]
-  const equipmentOptions = ["all", "Barbell", "Dumbbell", "Cables", "Machines", "Bodyweight", "Kettlebell", "Resistance bands"]
 
   return (
     <div className="space-y-4">
