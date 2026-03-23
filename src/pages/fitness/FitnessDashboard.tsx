@@ -6,11 +6,13 @@ import BodyMetricsScreen from "./BodyMetricsScreen"
 import ExerciseDatabase from "./ExerciseDatabase"
 import PRTracker from "./PRTracker"
 import ExerciseHistory from "./ExerciseHistory"
+import SkillsTracker from "./SkillsTracker"
 
 const DASH_TABS = [
     { id: "overview", icon: "📊", label: "Overview" },
     { id: "workout", icon: "⚔️", label: "Workout" },
     { id: "exercises", icon: "📚", label: "Exercises" },
+    { id: "skills", icon: "⭐", label: "Skills" },
     { id: "prs", icon: "🏆", label: "PRs" },
     { id: "metrics", icon: "📏", label: "Metrics" },
     { id: "history", icon: "📋", label: "History" },
@@ -90,7 +92,12 @@ export default function FitnessDashboard({ profile, onUserUpdate }: {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             {[
-                                { label: "Goal", val: profile.fitnessGoal.replace(/_/g, " ") },
+                                {
+                                    label: "Goals", val: (Array.isArray(profile.fitnessGoal)
+                                        ? profile.fitnessGoal
+                                        : [profile.fitnessGoal]
+                                    ).map((g: string) => g.replace(/_/g, " ")).join(", ")
+                                },
                                 { label: "Units", val: profile.units },
                                 { label: "Equipment", val: `${profile.equipment.length} types` },
                                 {
@@ -198,6 +205,10 @@ export default function FitnessDashboard({ profile, onUserUpdate }: {
 
             {activeTab === "exercises" && (
                 <ExerciseDatabase />
+            )}
+
+            {activeTab === "skills" && (
+                <SkillsTracker profile={profile} onUserUpdate={onUserUpdate} />
             )}
 
             {activeTab === "history" && (

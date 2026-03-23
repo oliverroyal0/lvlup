@@ -108,7 +108,7 @@ export interface FitnessProfile {
   weightLbs?: number
   age?: number
   gender?: string
-  fitnessGoal: "lose_weight" | "build_muscle" | "get_stronger" | "improve_endurance" | "learn_skills" | "general_fitness"
+  fitnessGoal:string[]
   units: "metric" | "imperial"
   equipment: string[]
   beforePhotoUrl?: string
