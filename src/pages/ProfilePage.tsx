@@ -111,19 +111,18 @@ async function clearAllData() {
     await supabase.from("missions").delete().eq("user_id", session.user.id)
     await supabase.from("journal_entries").delete().eq("user_id", session.user.id)
     await supabase.from("stat_records").delete().eq("user_id", session.user.id)
-    await supabase.from("users").update({
-      level: 1,
-      current_xp: 0,
-      total_xp: 0,
-      rank: "F",
-      title: "Newcomer",
-    }).eq("id", session.user.id)
   }
   await db.quests.clear()
   await db.missions.clear()
   await db.journalEntries.clear()
   await db.statRecords.clear()
   await db.streaks.clear()
+  await db.habits.clear()
+  await db.workoutLogs.clear()
+  await db.workoutSets.clear()
+  await db.personalRecords.clear()
+  await db.bodyMetrics.clear()
+  await db.travelPins.clear()
 
   // Reset local user
   const localUser = await db.users.toCollection().first()
@@ -137,9 +136,23 @@ async function clearAllData() {
     })
   }
 
+  // Reset cloud user
+  if (session) {
+    await supabase.from("users").update({
+      level: 1,
+      current_xp: 0,
+      total_xp: 0,
+      rank: "F",
+      title: "Newcomer",
+    }).eq("id", session.user.id)
+  }
+
   localStorage.removeItem("lvlup-onboarded")
+  localStorage.removeItem("lvlup-ai-calls")
   setShowClearData(false)
-  window.location.reload()
+
+  // Force full reload to clear all in-memory state
+  window.location.href = "/"
 }
   const xpNeeded = xpForNextLevel(user.level)
   const xpPct = Math.min((user.currentXP / xpNeeded) * 100, 100)
