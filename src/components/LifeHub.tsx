@@ -3,6 +3,7 @@ import { PageTransition } from "./PageTransition"
 import { AIPanel } from "./AIPanel"
 import TravelPage from "../pages/TravelPage"
 import FitnessPage from "../pages/FitnessPage"
+import FinancePage from "../pages/FinancePage"
 
 
 const LIFE_TABS = [
@@ -119,7 +120,9 @@ export function LifeHub({ activeSubTab, onSubTabChange, aiOpen, onAIClose, onUse
           {activeSubTab === "fitness" && (
             <FitnessPage onUserUpdate={onUserUpdate} />
           )}
-          {activeSubTab === "finance" && <ComingSoon title="Finance" icon="💰" />}
+          {activeSubTab === "finance" && (
+            <FinancePage onUserUpdate={onUserUpdate} />
+          )}
           {activeSubTab === "education" && <ComingSoon title="Education" icon="🎓" />}
           {activeSubTab === "books" && <ComingSoon title="Books" icon="📚" />}
         </PageTransition>

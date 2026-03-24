@@ -108,7 +108,7 @@ export interface FitnessProfile {
   weightLbs?: number
   age?: number
   gender?: string
-  fitnessGoal:string[]
+  fitnessGoal: string[]
   units: "metric" | "imperial"
   equipment: string[]
   beforePhotoUrl?: string
@@ -202,6 +202,67 @@ export interface SkillProgress {
   createdAt: Date
 }
 
+export interface FinanceProfile {
+  id?: number
+  currency: string
+  monthlyIncome: number
+  createdAt: Date
+}
+
+export interface Transaction {
+  id?: number
+  amount: number
+  type: "income" | "expense"
+  category: string
+  description: string
+  date: string
+  isRecurring: boolean
+  createdAt: Date
+}
+
+export interface SavingsGoal {
+  id?: number
+  title: string
+  targetAmount: number
+  currentAmount: number
+  deadline?: string
+  icon: string
+  color: string
+  createdAt: Date
+}
+
+export interface Debt {
+  id?: number
+  title: string
+  type: "credit_card" | "student_loan" | "car_loan" | "mortgage" | "personal_loan" | "other"
+  totalAmount: number
+  remainingAmount: number
+  interestRate: number
+  minimumPayment: number
+  dueDate?: string
+  createdAt: Date
+}
+
+export interface Investment {
+  id?: number
+  title: string
+  type: "stocks" | "crypto" | "real_estate" | "etf" | "bonds" | "other"
+  amountInvested: number
+  currentValue: number
+  ticker?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface NetWorthSnapshot {
+  id?: number
+  date: string
+  totalAssets: number
+  totalLiabilities: number
+  netWorth: number
+  createdAt: Date
+}
+
 export class LVLUpDatabase extends Dexie {
   quests!: Table<Quest>
   users!: Table<User>
@@ -219,28 +280,40 @@ export class LVLUpDatabase extends Dexie {
   workoutSets!: Table<WorkoutSet>
   personalRecords!: Table<PersonalRecord>
   skillProgress!: Table<SkillProgress>
+  financeProfile!: Table<FinanceProfile>
+  transactions!: Table<Transaction>
+  savingsGoals!: Table<SavingsGoal>
+  debts!: Table<Debt>
+  investments!: Table<Investment>
+  netWorthSnapshots!: Table<NetWorthSnapshot>
 
 
   constructor() {
     super("lvlup-db")
-    this.version(10).stores({
-      quests: "++id, category, frequency, isCompleted, createdAt",
-      users: "++id, username",
-      missions: "++id, missionType, category, isCompleted, createdAt",
-      statRecords: "++id, category, updatedAt",
-      journalEntries: "++id, mood, createdAt",
-      streaks: "++id, lastActiveDate",
-      missionSteps: "++id, missionId, isCompleted, createdAt",
-      habits: "++id, category, timeOfDay, lastCompletedDate, createdAt",
-      travelPins: "++id, country, visitedDate, createdAt",
-      fitnessProfile: "++id",
-      bodyMetrics: "++id, date, createdAt",
-      exercises: "++id, category, difficulty, isCustom",
-      workoutLogs: "++id, date, createdAt",
-      workoutSets: "++id, workoutLogId, exerciseId",
-      personalRecords: "++id, exerciseId, achievedDate",
-      skillProgress: "++id, exerciseId",
-    })
+   this.version(11).stores({
+  quests: "++id, category, frequency, isCompleted, createdAt",
+  users: "++id, username",
+  missions: "++id, missionType, category, isCompleted, createdAt",
+  statRecords: "++id, category, updatedAt",
+  journalEntries: "++id, mood, createdAt",
+  streaks: "++id, lastActiveDate",
+  missionSteps: "++id, missionId, isCompleted, createdAt",
+  habits: "++id, category, timeOfDay, lastCompletedDate, createdAt",
+  travelPins: "++id, country, visitedDate, createdAt",
+  fitnessProfile: "++id",
+  bodyMetrics: "++id, date, createdAt",
+  exercises: "++id, category, difficulty, isCustom",
+  workoutLogs: "++id, date, createdAt",
+  workoutSets: "++id, workoutLogId, exerciseId",
+  personalRecords: "++id, exerciseId, achievedDate",
+  skillProgress: "++id, exerciseId",
+  financeProfile: "++id",
+  transactions: "++id, type, category, date, createdAt",
+  savingsGoals: "++id, createdAt",
+  debts: "++id, type, createdAt",
+  investments: "++id, type, createdAt",
+  netWorthSnapshots: "++id, date, createdAt",
+})
   }
 }
 
